@@ -1,0 +1,58 @@
+# Slovenian backchannel lexicon
+# One word per line, lowercase
+# Lines starting with # are comments
+
+# Sound-based backchannels (non-lexical)
+mhm
+mh
+mhmh
+mm
+mmm
+hmm
+hm
+
+# Agreement and confirmation markers
+ja
+aha
+aja
+ne
+no
+ok
+okej
+prav
+tako
+res
+
+# Positive assessment markers
+dobro
+super
+fajn
+seveda
+vredu
+redu
+
+# Attention signals and minimal markers
+a
+aa
+aaa
+
+# Fillers and hesitations
+eee
+eem
+em
+
+# Reactions and exclamations
+ha
+ah
+oh
+eh
+ojej
+joj
+
+# Polite continuers
+prosim
+razumem
+
+# Reactive questions (may be flagged if used as content questions)
+kaj
+kako

@@ -11,45 +11,35 @@ from typing import Dict, Iterable, List, Optional, Tuple
 
 PUNCT_RE = re.compile(r"^\W+$", re.UNICODE)
 
-DEFAULT_SEED_LEXICON = {
-    # sound-based backchannels (non-lexical)
-    "mhm", "mh", "mhmh", "mm", "mmm", "hmm", "hm",
+def load_lexicon_from_file(path: Path) -> set[str]:
+    """Load lexicon from file, skipping comments and empty lines."""
+    lexicon = set()
+    if not path.exists():
+        print(f"Warning: Lexicon file not found at {path}")
+        return lexicon
     
-    # agreement and confirmation markers
-    "ja", "aha", "aja",
-    "ne", "no",
-    "ok", "okej",
-    "prav", "tako", "res",
-    
-    # positive assessment markers
-    "dobro", "super", "fajn",
-    "seveda",
-    "vredu", "redu",  # "vredu" = colloquial; "redu" matches "v redu" (2 tokens)
-    
-    # attention signals and minimal markers
-    "a", "aa", "aaa",
-    
-    # fillers and hesitations
-    "eee", "eem", "em",
-    
-    # reactions and exclamations
-    "ha", "ah", "oh", "eh",
-    "ojej", "joj",
-    
-    # polite continuers
-    "prosim",
-    "razumem",  # "I understand" - used as acknowledgment signal
-    
-    # reactive questions (may be flagged if used as content questions)
-    "kaj", "kako",
-}
+    with path.open('r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            # Skip comments and empty lines
+            if line and not line.startswith('#'):
+                lexicon.add(line.lower())
+    return lexicon
 
-# Greeting phrases to exclude (lowercase)
-GREETING_PHRASES = {
-    "dobro jutro", "dober dan", "dober večer", "dobro vecer",
-    "lep dan", "lep večer", "lepa noč", "lepo jutro",
-    "živjo", "zdravo", "adijo", "nasvidenje", "zbogom",
-}
+def load_greetings_from_file(path: Path) -> set[str]:
+    """Load greeting exclusion phrases from file."""
+    greetings = set()
+    if not path.exists():
+        print(f"Warning: Greetings file not found at {path}")
+        return greetings
+    
+    with path.open('r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip().lower()
+            # Skip comments and empty lines
+            if line and not line.startswith('#'):
+                greetings.add(line)
+    return greetings
 
 @dataclass
 class Token:
@@ -180,12 +170,12 @@ def has_discourse_like_deprel(sent: Sent) -> bool:
             return True
     return False
 
-def is_greeting_phrase(text: str) -> bool:
-    """Check if text matches common greeting phrases."""
+def is_greeting_phrase(text: str, greetings: set[str]) -> bool:
+    """Check if text matches greeting phrases from exclusion list."""
     normalized = norm_form(text)
     # Remove punctuation for comparison
     normalized = normalized.replace(".", "").replace(",", "").replace("!", "").replace("?", "").strip()
-    return normalized in GREETING_PHRASES or any(greeting in normalized for greeting in GREETING_PHRASES)
+    return normalized in greetings or any(greeting in normalized for greeting in greetings)
 
 def looks_like_backchannel(sent: Sent, lex: set[str]) -> bool:
     """Check if sentence itself looks like a backchannel (short, lexicon match)."""
@@ -337,7 +327,8 @@ def main():
     ap.add_argument("--end_k", type=int, default=2, help="Consider A-B near end of doc within this many turns")
     ap.add_argument("--include_no_continuation", action="store_true",
                     help="Also include short B even if we can't prove A continues")
-    ap.add_argument("--lexicon_file", default=None, help="Optional extra lexicon file (one token per line)")
+    ap.add_argument("--lexicon_file", default=None, help="Path to lexicon file (default: lexicon/sl_backchannels.txt)")
+    ap.add_argument("--greetings_file", default=None, help="Path to greetings exclusion file (default: lexicon/sl_greetings_exclude.txt)")
     ap.add_argument("--auto_top_short", type=int, default=0,
                     help="If >0, write top short utterances list to <output>.top_short.csv")
     ap.add_argument("--add_top_short_to_lexicon", type=int, default=0,
@@ -358,14 +349,18 @@ def main():
     path = Path(args.input)
     sents = parse_conllu(path)
 
-    # lexicon
-    lex = set(DEFAULT_SEED_LEXICON)
-    if args.lexicon_file:
-        extra = Path(args.lexicon_file)
-        for line in extra.read_text(encoding="utf-8").splitlines():
-            line = norm_form(line)
-            if line and not line.startswith("#"):
-                lex.add(line)
+    # Load lexicon from file
+    lexicon_path = Path(args.lexicon_file) if args.lexicon_file else project_root / "lexicon" / "sl_backchannels.txt"
+    lex = load_lexicon_from_file(lexicon_path)
+    if not lex:
+        print(f"Error: No lexicon loaded from {lexicon_path}. Please check the file exists.")
+        return
+    print(f"Loaded {len(lex)} lexicon words from {lexicon_path}")
+    
+    # Load greetings exclusion list from file
+    greetings_path = Path(args.greetings_file) if args.greetings_file else project_root / "lexicon" / "sl_greetings_exclude.txt"
+    greeting_phrases = load_greetings_from_file(greetings_path)
+    print(f"Loaded {len(greeting_phrases)} greeting exclusions from {greetings_path}")
 
     # optional: build top short utterances
     if args.auto_top_short > 0:
@@ -415,7 +410,7 @@ def main():
             continue
         
         # Skip if B is a greeting phrase (only hard filter)
-        if is_greeting_phrase(B.text):
+        if is_greeting_phrase(B.text, greeting_phrases):
             continue
         
         # Compute flags (soft filters for manual review)
@@ -518,6 +513,14 @@ def main():
 
         why_candidate = "; ".join(why_parts)
         
+        # Get A tokens and POS tags for attachment visualization
+        A_forms = []
+        A_pos = []
+        for tok in A.tokens:
+            if hasattr(tok, 'form') and tok.form:
+                A_forms.append(tok.form)
+                A_pos.append(tok.upos if hasattr(tok, 'upos') else '_')
+        
         row = rows_by_b.get(B.sent_id)
         if row is None:
             rows_by_b[B.sent_id] = {
@@ -528,6 +531,8 @@ def main():
                 "A_speaker": A.speaker,
                 "A_text": A.text,
                 "A_sound_url": A.sound_url,
+                "A_tokens": " ".join(A_forms),
+                "A_pos_tags": " ".join(A_pos),
                 "B_sent_id": B.sent_id,
                 "B_speaker": B.speaker,
                 "B_text": B.text,
@@ -557,7 +562,7 @@ def main():
     out = Path(args.output)
     fieldnames = [
         "doc", "confidence", "confidence_score",
-        "A_sent_id", "A_speaker", "A_text", "A_sound_url",
+        "A_sent_id", "A_speaker", "A_text", "A_sound_url", "A_tokens", "A_pos_tags",
         "B_sent_id", "B_speaker", "B_text", "B_sound_url",
         "B_tokens", "B_token_count", "why_candidate",
         "A_looks_like_backchannel", "B_has_content", "B_is_question", "B_after_question",
