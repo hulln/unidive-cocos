@@ -20,7 +20,15 @@ DEFAULT_SEED_LEXICON = {
     "prav", "tako", "res",
     "dobro", "super", "fajn",
     "seveda",
+    "a", "aa", "aaa",
     # add more if you like
+}
+
+# Greeting phrases to exclude (lowercase)
+GREETING_PHRASES = {
+    "dobro jutro", "dober dan", "dober večer", "dobro vecer",
+    "lep dan", "lep večer", "lepa noč", "lepo jutro",
+    "živjo", "zdravo", "adijo", "nasvidenje", "zbogom",
 }
 
 @dataclass
@@ -152,6 +160,59 @@ def has_discourse_like_deprel(sent: Sent) -> bool:
             return True
     return False
 
+def is_greeting_phrase(text: str) -> bool:
+    """Check if text matches common greeting phrases."""
+    normalized = norm_form(text)
+    # Remove punctuation for comparison
+    normalized = normalized.replace(".", "").replace(",", "").replace("!", "").replace("?", "").strip()
+    return normalized in GREETING_PHRASES or any(greeting in normalized for greeting in GREETING_PHRASES)
+
+def looks_like_backchannel(sent: Sent, lex: set[str]) -> bool:
+    """Check if sentence itself looks like a backchannel (short, lexicon match)."""
+    toks = nonpunct_tokens(sent)
+    if len(toks) == 0 or len(toks) > 3:  # backchannels are typically 1-3 tokens
+        return False
+    forms = [norm_form(t.form) for t in toks]
+    # All tokens should be in lexicon
+    return all(f in lex for f in forms)
+
+def has_content_structure(sent: Sent) -> bool:
+    """Check if sentence has content words/structure that makes it NOT a backchannel."""
+    toks = nonpunct_tokens(sent)
+    
+    # Check for verbs (especially imperatives, infinitives, or finite verbs)
+    for t in toks:
+        if t.upos == "VERB":
+            return True
+        # Check for nouns (except when they're very short utterances like names)
+        if t.upos in {"NOUN", "PROPN"} and len(toks) > 2:
+            return True
+        # Check for adjectives in longer utterances
+        if t.upos == "ADJ" and len(toks) > 2:
+            return True
+    
+    return False
+
+def is_question_requiring_answer(sent: Sent) -> bool:
+    """Check if sentence is a question that requires an answer (not a backchannel)."""
+    text = (sent.text or "").strip()
+    if not text.endswith("?"):
+        return False
+    
+    # Tag questions with just one token + "ne" are OK backchannels
+    toks = nonpunct_tokens(sent)
+    if len(toks) <= 2:
+        forms = [norm_form(t.form) for t in toks]
+        # "ne?" or "ja?" alone are OK
+        if forms == ["ne"] or forms == ["ja"]:
+            return False
+    
+    # Questions with more than 2 tokens are NOT backchannels
+    if len(toks) > 2:
+        return True
+    
+    return False
+
 def build_top_short_utterances(sents: List[Sent], max_tokens: int) -> Counter[str]:
     c = Counter()
     for s in sents:
@@ -268,6 +329,30 @@ def main():
             continue
         if hits < args.min_lex_hits:
             continue
+        
+        # Skip if B is a greeting phrase
+        if is_greeting_phrase(B.text):
+            continue
+        
+        # Skip if B has content structure (verbs, nouns, etc.) making it a full statement
+        if has_content_structure(B):
+            continue
+        
+        # Skip if B is a question requiring an answer
+        if is_question_requiring_answer(B):
+            continue
+        
+        # Check if A looks like a backchannel itself
+        A_is_backchannel_like = looks_like_backchannel(A, lex)
+
+        # If A is a question, B is likely an answer.
+        # Keep only if B is "pure marker-only" (1–3 tokens, all in lexicon).
+        A_is_q = is_question_like(A.text)
+        B_after_question = False
+        if A_is_q:
+            if not looks_like_backchannel(B, lex):
+                continue
+            B_after_question = True  # Flag for review
 
         # compute continuation evidence
         reasons = set()
@@ -308,7 +393,6 @@ def main():
         A_root = sent_root_id(A)
         A_last = last_content_id(A)
 
-        A_is_q = is_question_like(A.text)
         B_is_q = is_question_like(B.text)
 
         proposed_root = f"{A.sent_id}::{A_root}" if A_root is not None else ""
@@ -322,12 +406,14 @@ def main():
                 "A_speaker": A.speaker,
                 "A_text": A.text,
                 "A_sound_url": A.sound_url,
+                "A_looks_like_backchannel": int(A_is_backchannel_like),
                 "A_root_id": A_root,
                 "A_last_content_id": A_last,
                 "B_sent_id": B.sent_id,
                 "B_speaker": B.speaker,
                 "B_text": B.text,
                 "B_sound_url": B.sound_url,
+                "B_after_question": int(B_after_question),
                 "B_tokens_norm": " ".join(forms),
                 "B_lex_hits": hits,
                 "B_tok_count": n_tok,
@@ -349,8 +435,8 @@ def main():
     out = Path(args.output)
     fieldnames = [
         "doc",
-        "A_sent_id", "A_speaker", "A_text", "A_sound_url", "A_root_id", "A_last_content_id",
-        "B_sent_id", "B_speaker", "B_text", "B_sound_url",
+        "A_sent_id", "A_speaker", "A_text", "A_sound_url", "A_looks_like_backchannel", "A_root_id", "A_last_content_id",
+        "B_sent_id", "B_speaker", "B_text", "B_sound_url", "B_after_question",
         "B_tokens_norm", "B_lex_hits", "B_tok_count",
         "A_is_question", "B_is_question",
         "proposed_attach_root", "proposed_attach_last_content",
