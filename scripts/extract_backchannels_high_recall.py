@@ -12,16 +12,36 @@ from typing import Dict, Iterable, List, Optional, Tuple
 PUNCT_RE = re.compile(r"^\W+$", re.UNICODE)
 
 DEFAULT_SEED_LEXICON = {
-    # very common backchannel tokens / short acknowledgements (lowercase)
+    # sound-based backchannels (non-lexical)
     "mhm", "mh", "mhmh", "mm", "mmm", "hmm", "hm",
-    "aha", "aja",
-    "ja", "ne", "no",
+    
+    # agreement and confirmation markers
+    "ja", "aha", "aja",
+    "ne", "no",
     "ok", "okej",
     "prav", "tako", "res",
+    
+    # positive assessment markers
     "dobro", "super", "fajn",
     "seveda",
+    "vredu", "redu",  # "vredu" = colloquial; "redu" matches "v redu" (2 tokens)
+    
+    # attention signals and minimal markers
     "a", "aa", "aaa",
-    # add more if you like
+    
+    # fillers and hesitations
+    "eee", "eem", "em",
+    
+    # reactions and exclamations
+    "ha", "ah", "oh", "eh",
+    "ojej", "joj",
+    
+    # polite continuers
+    "prosim",
+    "razumem",  # "I understand" - used as acknowledgment signal
+    
+    # reactive questions (may be flagged if used as content questions)
+    "kaj", "kako",
 }
 
 # Greeting phrases to exclude (lowercase)
@@ -180,16 +200,33 @@ def has_content_structure(sent: Sent) -> bool:
     """Check if sentence has content words/structure that makes it NOT a backchannel."""
     toks = nonpunct_tokens(sent)
     
-    # Check for verbs (especially imperatives, infinitives, or finite verbs)
+    # Check for explicit content words first
+    has_verb = False
+    has_pron = False
     for t in toks:
         if t.upos == "VERB":
-            return True
+            has_verb = True
+        if t.upos == "PRON":
+            has_pron = True
         # Check for nouns (except when they're very short utterances like names)
         if t.upos in {"NOUN", "PROPN"} and len(toks) > 2:
             return True
         # Check for adjectives in longer utterances
         if t.upos == "ADJ" and len(toks) > 2:
             return True
+    
+    # PRON + VERB combination suggests full clause (e.g., "jaz sem", "ti si")
+    if has_pron and has_verb:
+        return True
+    
+    # Single VERB is content
+    if has_verb:
+        return True
+    
+    # Fallback: if no content words detected but suspiciously long
+    # Backchannels are typically 1-3 tokens per guidelines ("samostojno")
+    if len(toks) > 3:
+        return True
     
     return False
 
@@ -243,11 +280,58 @@ def is_near_end_of_doc(sents: List[Sent], i: int, k_end: int) -> bool:
         j += 1
     return (last - i) <= k_end
 
+def compute_numeric_confidence(confidence: str, n_tok: int, warning_count: int, 
+                               has_immediate_aba: bool, has_windowed_aba: bool,
+                               is_answer_like: bool = False) -> int:
+    """Compute numeric confidence score 0-100.
+    
+    Guidelines: backchannels are typically 1-3 tokens, standalone markers like 'mhm, ja, aha',
+    and the original speaker continues normally.
+    
+    Scoring:
+    - Base score from continuation pattern
+    - Penalties for warnings and length
+    - Special penalty for answer-like cases (B after question + has content)
+    """
+    # Start with base score from continuation evidence
+    # Guidelines require: "prvotni govorec normalno nadaljuje"
+    if has_immediate_aba:
+        base_score = 85  # Strong evidence: A continues immediately
+    elif has_windowed_aba:
+        base_score = 70  # Good evidence: A continues within window
+    else:
+        base_score = 35  # Very weak: no continuation proof, just short + lexicon match
+    
+    # Length penalty: backchannels typically 1-3 tokens (guidelines: "samostojno")
+    if n_tok == 1:
+        length_bonus = 10
+    elif n_tok == 2:
+        length_bonus = 5
+    elif n_tok == 3:
+        length_bonus = 0
+    elif n_tok == 4:
+        length_bonus = -15  # stricter penalty
+    elif n_tok == 5:
+        length_bonus = -25  # much stricter
+    else:  # 6+ tokens
+        length_bonus = -50  # very aggressive penalty - clearly violates "samostojno"
+    
+    # Warning penalties
+    warning_penalty = warning_count * 15
+    
+    # Special penalty: B after question WITH content = likely answer, not backchannel
+    answer_penalty = 40 if is_answer_like else 0
+    
+    # Compute final score
+    score = base_score + length_bonus - warning_penalty - answer_penalty
+    
+    # Clamp to 0-100
+    return max(0, min(100, score))
+
 def main():
     ap = argparse.ArgumentParser(description="Extract backchannel candidates from SST corpus")
     ap.add_argument("--input", default=None, help="Path to SST .conllu (default: src/sst/sl_sst-ud-merged.conllu)")
     ap.add_argument("--output", default=None, help="Output CSV path (default: output/sst/backchannel_candidates.csv)")
-    ap.add_argument("--max_tokens", type=int, default=5, help="Max non-punct tokens in B to consider")
     ap.add_argument("--min_lex_hits", type=int, default=1, help="Minimum lexicon hits in B")
     ap.add_argument("--window", type=int, default=5, help="Lookahead window for A…B…A continuation")
     ap.add_argument("--end_k", type=int, default=2, help="Consider A-B near end of doc within this many turns")
@@ -285,7 +369,7 @@ def main():
 
     # optional: build top short utterances
     if args.auto_top_short > 0:
-        top = build_top_short_utterances(sents, max_tokens=args.max_tokens)
+        top = build_top_short_utterances(sents, max_tokens=10)
         out_top = Path(args.output).with_suffix("")  # strip .csv if present
         out_top = Path(str(out_top) + ".top_short.csv")
         with out_top.open("w", encoding="utf-8", newline="") as f:
@@ -325,69 +409,103 @@ def main():
             continue  # backchannels are typically other-speaker
 
         hits, n_tok, forms = count_lexicon_hits(B, lex)
-        if n_tok == 0 or n_tok > args.max_tokens:
+        if n_tok == 0:
             continue
         if hits < args.min_lex_hits:
             continue
         
-        # Skip if B is a greeting phrase
+        # Skip if B is a greeting phrase (only hard filter)
         if is_greeting_phrase(B.text):
             continue
         
-        # Skip if B has content structure (verbs, nouns, etc.) making it a full statement
-        if has_content_structure(B):
-            continue
-        
-        # Skip if B is a question requiring an answer
-        if is_question_requiring_answer(B):
-            continue
-        
-        # Check if A looks like a backchannel itself
+        # Compute flags (soft filters for manual review)
         A_is_backchannel_like = looks_like_backchannel(A, lex)
-
-        # If A is a question, B is likely an answer.
-        # Keep only if B is "pure marker-only" (1–3 tokens, all in lexicon).
         A_is_q = is_question_like(A.text)
-        B_after_question = False
-        if A_is_q:
-            if not looks_like_backchannel(B, lex):
-                continue
-            B_after_question = True  # Flag for review
+        B_has_content = has_content_structure(B)
+        B_is_multi_token_q = is_question_requiring_answer(B)
+        B_after_question = A_is_q
+        
+        # FILTER: Skip WRONG_DIR cases where A looks like backchannel and B is long
+        # This means we're likely capturing the wrong direction (A is backchannel, not B)
+        if A_is_backchannel_like and n_tok > 4:
+            continue
 
-        # compute continuation evidence
-        reasons = set()
-        score = 0
+        # Compute continuation evidence and base confidence
+        why_parts = []
+        base_confidence = "LOW"
 
-        # immediate ABA
+        # immediate ABA - strongest evidence
+        has_immediate_aba = False
         if i + 1 < len(sents):
             C = sents[i + 1]
             if C.doc == B.doc and C.speaker == A.speaker:
-                reasons.add("ABA_immediate")
-                score += 3
+                why_parts.append("A continues immediately after B")
+                has_immediate_aba = True
+                base_confidence = "HIGH"
 
         # windowed A…B…A
+        has_windowed_aba = False
         j = find_next_same_speaker(sents, i - 1, window=args.window)
-        # j is next same speaker as A; for window evidence we want it after B
         if j is not None and j > i:
-            reasons.add(f"ABA_window{args.window}")
-            score += 2
+            if not has_immediate_aba:
+                why_parts.append(f"A continues within {args.window} turns")
+                has_windowed_aba = True
+                if base_confidence != "HIGH":
+                    base_confidence = "MEDIUM"
 
-        # near end of doc A-B
-        if is_near_end_of_doc(sents, i, k_end=args.end_k):
-            reasons.add(f"AB_enddoc{args.end_k}")
-            score += 1
+        # near end of doc A-B (note but don't auto-upgrade)
+        at_end = is_near_end_of_doc(sents, i, k_end=args.end_k)
+        if at_end:
+            why_parts.append("Near end of conversation")
+            # Don't auto-upgrade - near end doesn't prove backchannel status
 
-        # include without continuation if requested
-        if not reasons and not args.include_no_continuation:
-            continue
-        if not reasons:
-            reasons.add("B_short_no_continuation")
-            score += 0
+        # No continuation evidence
+        if not why_parts:
+            if not args.include_no_continuation:
+                continue
+            why_parts.append("Short B with lexicon match, no continuation proof")
+            base_confidence = "LOW"
 
-        # weak syntactic clue (not required)
+        # weak syntactic clue
         if has_discourse_like_deprel(B):
-            reasons.add("B_has_discourse_deprel")
-            score += 1
+            why_parts.append("has discourse relation")
+        
+        # DOWN-GRADE confidence based on warning flags
+        # Count warning flags
+        warning_count = sum([B_has_content, B_is_multi_token_q, B_after_question, A_is_backchannel_like])
+        
+        confidence = base_confidence
+        
+        # Special handling: B after question is very suspicious (likely answer, not backchannel)
+        if B_after_question:
+            if confidence == "HIGH":
+                confidence = "MEDIUM"  # downgrade HIGH to MEDIUM
+        
+        # Length check: backchannels typically 1-3 tokens per guidelines  
+        # "samostojno" guideline - long utterances violate this strongly
+        if n_tok >= 6:
+            # 6+ tokens clearly violates "samostojno" - downgrade to LOW
+            confidence = "LOW"
+        elif n_tok > 3 and confidence == "HIGH":
+            confidence = "MEDIUM"  # 4-5 tokens shouldn't be HIGH
+        
+        # General warning-based downgrade
+        if warning_count >= 2:
+            # Multiple warnings -> always LOW (probably not a backchannel)
+            confidence = "LOW"
+        elif warning_count == 1:
+            # One warning -> cap at MEDIUM
+            if confidence == "HIGH":
+                confidence = "MEDIUM"
+        
+        # Compute numeric confidence score (0-100)
+        # Special case: B after question + has content = likely answer, not backchannel
+        is_answer_like = B_after_question and B_has_content
+        numeric_confidence = compute_numeric_confidence(
+            confidence, n_tok, warning_count, has_immediate_aba, 
+            has_windowed_aba if 'has_windowed_aba' in locals() else False,
+            is_answer_like=is_answer_like
+        )
 
         # flags
         A_root = sent_root_id(A)
@@ -398,56 +516,58 @@ def main():
         proposed_root = f"{A.sent_id}::{A_root}" if A_root is not None else ""
         proposed_last = f"{A.sent_id}::{A_last}" if A_last is not None else ""
 
+        why_candidate = "; ".join(why_parts)
+        
         row = rows_by_b.get(B.sent_id)
         if row is None:
             rows_by_b[B.sent_id] = {
                 "doc": B.doc,
+                "confidence": confidence,
+                "confidence_score": numeric_confidence,
                 "A_sent_id": A.sent_id,
                 "A_speaker": A.speaker,
                 "A_text": A.text,
                 "A_sound_url": A.sound_url,
-                "A_looks_like_backchannel": int(A_is_backchannel_like),
-                "A_root_id": A_root,
-                "A_last_content_id": A_last,
                 "B_sent_id": B.sent_id,
                 "B_speaker": B.speaker,
                 "B_text": B.text,
                 "B_sound_url": B.sound_url,
+                "B_tokens": " ".join(forms),
+                "B_token_count": n_tok,
+                "why_candidate": why_candidate,
+                "A_looks_like_backchannel": int(A_is_backchannel_like),
+                "B_has_content": int(B_has_content),
+                "B_is_question": int(B_is_multi_token_q),
                 "B_after_question": int(B_after_question),
-                "B_tokens_norm": " ".join(forms),
-                "B_lex_hits": hits,
-                "B_tok_count": n_tok,
-                "A_is_question": int(A_is_q),
-                "B_is_question": int(B_is_q),
                 "proposed_attach_root": proposed_root,
                 "proposed_attach_last_content": proposed_last,
-                "score": score,
-                "reasons": "",  # filled later
-                "keep?": "",    # manual
+                "keep?": "",
             }
         else:
-            # merge if we hit same B again (should be rare), keep best score
-            rows_by_b[B.sent_id]["score"] = max(rows_by_b[B.sent_id]["score"], score)
-
-        reasons_by_b[B.sent_id].update(reasons)
+            # merge if we hit same B again (should be rare), keep best confidence
+            if confidence == "HIGH":
+                rows_by_b[B.sent_id]["confidence"] = "HIGH"
+            elif confidence == "MEDIUM" and rows_by_b[B.sent_id]["confidence"] == "LOW":
+                rows_by_b[B.sent_id]["confidence"] = "MEDIUM"
+            # append why_candidate
+            if why_candidate not in rows_by_b[B.sent_id]["why_candidate"]:
+                rows_by_b[B.sent_id]["why_candidate"] += " | " + why_candidate
 
     # write CSV
     out = Path(args.output)
     fieldnames = [
-        "doc",
-        "A_sent_id", "A_speaker", "A_text", "A_sound_url", "A_looks_like_backchannel", "A_root_id", "A_last_content_id",
-        "B_sent_id", "B_speaker", "B_text", "B_sound_url", "B_after_question",
-        "B_tokens_norm", "B_lex_hits", "B_tok_count",
-        "A_is_question", "B_is_question",
+        "doc", "confidence", "confidence_score",
+        "A_sent_id", "A_speaker", "A_text", "A_sound_url",
+        "B_sent_id", "B_speaker", "B_text", "B_sound_url",
+        "B_tokens", "B_token_count", "why_candidate",
+        "A_looks_like_backchannel", "B_has_content", "B_is_question", "B_after_question",
         "proposed_attach_root", "proposed_attach_last_content",
-        "score", "reasons",
         "keep?"
     ]
     with out.open("w", encoding="utf-8", newline="") as f:
         w = csv.DictWriter(f, fieldnames=fieldnames)
         w.writeheader()
         for b_sent_id, row in rows_by_b.items():
-            row["reasons"] = "|".join(sorted(reasons_by_b[b_sent_id]))
             w.writerow(row)
 
     print(f"Wrote {len(rows_by_b)} candidates to {out}")
