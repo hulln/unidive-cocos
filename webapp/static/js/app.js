@@ -6,6 +6,21 @@ let totalItems = 0;
 let currentUser = null;
 let userAnnotations = {};
 let lexiconWords = [];
+let categories = [];
+
+// Toggle advanced filters
+function toggleAdvancedFilters() {
+    const advancedSection = document.getElementById('advanced-filters');
+    const toggleBtn = document.getElementById('btn-toggle-advanced');
+    
+    if (advancedSection.style.display === 'none') {
+        advancedSection.style.display = 'block';
+        toggleBtn.classList.add('active');
+    } else {
+        advancedSection.style.display = 'none';
+        toggleBtn.classList.remove('active');
+    }
+}
 
 // User management
 function setUserName() {
@@ -24,8 +39,8 @@ function setUserName() {
     document.getElementById('user-info').style.display = 'flex';
     document.getElementById('current-user').textContent = name;
     
-    // Show hide annotated checkbox
-    document.getElementById('hide-annotated-container').style.display = 'flex';
+    // Show annotated filter dropdown
+    document.getElementById('filter-annotated').style.display = 'inline-block';
     
     loadUserAnnotations();
 }
@@ -39,9 +54,9 @@ function logoutUser() {
     document.getElementById('user-info').style.display = 'none';
     document.getElementById('user-name-input').value = '';
     
-    // Hide and uncheck the filter
-    document.getElementById('hide-annotated-container').style.display = 'none';
-    document.getElementById('filter-hide-annotated').checked = false;
+    // Hide and reset the filter
+    document.getElementById('filter-annotated').style.display = 'none';
+    document.getElementById('filter-annotated').value = 'all';
     
     loadCandidates();
 }
@@ -95,6 +110,71 @@ async function saveAnnotation(candidateId, doc, aSentId, bSentId, vote) {
     } catch (error) {
         console.error('Error saving annotation:', error);
         alert('Failed to save annotation');
+    }
+}
+
+async function unannotate(candidateId) {
+    if (!currentUser) {
+        alert('Please enter your name first');
+        return;
+    }
+    
+    if (!confirm('Remove this annotation?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/unannotate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                user_name: currentUser,
+                candidate_id: candidateId
+            })
+        });
+        
+        if (response.ok) {
+            delete userAnnotations[candidateId];
+            document.getElementById('user-annotation-count').textContent = Object.keys(userAnnotations).length;
+            loadCandidates();
+        }
+    } catch (error) {
+        console.error('Error removing annotation:', error);
+        alert('Failed to remove annotation');
+    }
+}
+
+async function clearAllAnnotations() {
+    if (!currentUser) {
+        alert('Please enter your name first');
+        return;
+    }
+    
+    const count = Object.keys(userAnnotations).length;
+    if (count === 0) {
+        alert('No annotations to clear');
+        return;
+    }
+    
+    if (!confirm(`Remove all ${count} annotations? This cannot be undone.`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/clear-annotations/${encodeURIComponent(currentUser)}`, {
+            method: 'POST'
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            userAnnotations = {};
+            document.getElementById('user-annotation-count').textContent = '0';
+            alert(`Removed ${data.deleted_count} annotations`);
+            loadCandidates();
+        }
+    } catch (error) {
+        console.error('Error clearing annotations:', error);
+        alert('Failed to clear annotations');
     }
 }
 
@@ -175,10 +255,16 @@ function createCandidateCard(candidate) {
         }
     }
     
+    // Get category with proper formatting
+    const categoryBadge = candidate.backchannel_type 
+        ? `<span class="category-badge category-${candidate.backchannel_type}">${candidate.backchannel_type}</span>`
+        : '';
+    
     card.innerHTML = `
         <div class="card-header">
             <span class="confidence-badge confidence-${candidate.confidence}">${candidate.confidence}</span>
             <span class="score-badge">Score: ${candidate.confidence_score}</span>
+            ${categoryBadge}
         </div>
         
         <div class="utterance">
@@ -219,20 +305,40 @@ function createCandidateCard(candidate) {
         
         const annotationSection = document.createElement('div');
         annotationSection.className = 'annotation-section';
-        annotationSection.innerHTML = `
-            <div class="annotation-buttons">
-                <button class="annotation-btn annotation-yes ${userVote === 'yes' ? 'active' : ''}" 
-                        onclick="saveAnnotation('${candidateId}', '${candidate.doc}', '${candidate.A_sent_id}', '${candidate.B_sent_id}', 'yes')"
-                        title="Mark as backchannel">
-                    ✓
-                </button>
-                <button class="annotation-btn annotation-no ${userVote === 'no' ? 'active' : ''}" 
-                        onclick="saveAnnotation('${candidateId}', '${candidate.doc}', '${candidate.A_sent_id}', '${candidate.B_sent_id}', 'no')"
-                        title="Not a backchannel">
-                    ✗
-                </button>
-            </div>
-        `;
+        
+        if (userVote) {
+            // Show current annotation - active button can be clicked to unannotate
+            annotationSection.innerHTML = `
+                <div class="annotation-buttons">
+                    <button class="annotation-btn annotation-yes ${userVote === 'yes' ? 'active' : ''}" 
+                            onclick="${userVote === 'yes' ? `unannotate('${candidateId}')` : `saveAnnotation('${candidateId}', '${candidate.doc}', '${candidate.A_sent_id}', '${candidate.B_sent_id}', 'yes')`}"
+                            title="${userVote === 'yes' ? 'Click to remove annotation' : 'Mark as backchannel'}">
+                        <span class="btn-icon">✓</span><span class="btn-minus">−</span>
+                    </button>
+                    <button class="annotation-btn annotation-no ${userVote === 'no' ? 'active' : ''}" 
+                            onclick="${userVote === 'no' ? `unannotate('${candidateId}')` : `saveAnnotation('${candidateId}', '${candidate.doc}', '${candidate.A_sent_id}', '${candidate.B_sent_id}', 'no')`}"
+                            title="${userVote === 'no' ? 'Click to remove annotation' : 'Not a backchannel'}">
+                        <span class="btn-icon">✗</span><span class="btn-minus">−</span>
+                    </button>
+                </div>
+            `;
+        } else {
+            // Show annotation buttons only
+            annotationSection.innerHTML = `
+                <div class="annotation-buttons">
+                    <button class="annotation-btn annotation-yes" 
+                            onclick="saveAnnotation('${candidateId}', '${candidate.doc}', '${candidate.A_sent_id}', '${candidate.B_sent_id}', 'yes')"
+                            title="Mark as backchannel">
+                        ✓
+                    </button>
+                    <button class="annotation-btn annotation-no" 
+                            onclick="saveAnnotation('${candidateId}', '${candidate.doc}', '${candidate.A_sent_id}', '${candidate.B_sent_id}', 'no')"
+                            title="Not a backchannel">
+                        ✗
+                    </button>
+                </div>
+            `;
+        }
         card.appendChild(annotationSection);
     }
     
@@ -290,6 +396,27 @@ async function loadLexicon() {
     }
 }
 
+async function loadCategories() {
+    try {
+        const response = await fetch('/api/categories');
+        categories = await response.json();
+        
+        // Populate category select
+        const select = document.getElementById('filter-category');
+        if (select) {
+            select.innerHTML = '<option value="">Category: All</option>';
+            categories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat;
+                option.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading categories:', error);
+    }
+}
+
 function getFilterParams() {
     const params = new URLSearchParams();
     
@@ -307,7 +434,8 @@ function getFilterParams() {
     const afterQuestion = document.getElementById('filter-after-question').value;
     const aBackchannel = document.getElementById('filter-a-backchannel').value;
     const lexicon = document.getElementById('filter-lexicon').value;
-    const hideAnnotated = document.getElementById('filter-hide-annotated').checked;
+    const category = document.getElementById('filter-category') ? document.getElementById('filter-category').value : '';
+    const annotatedFilter = document.getElementById('filter-annotated').value;
     
     if (confidence) params.append('confidence', confidence);
     if (sort) params.append('sort', sort);
@@ -323,7 +451,14 @@ function getFilterParams() {
     if (afterQuestion) params.append('after_question', afterQuestion);
     if (aBackchannel) params.append('a_backchannel', aBackchannel);
     if (lexicon) params.append('lexicon', lexicon);
-    if (hideAnnotated && currentUser) params.append('hide_annotated', currentUser);
+    if (category) params.append('category', category);
+    if (annotatedFilter && annotatedFilter !== 'all' && currentUser) {
+        if (annotatedFilter === 'hide') {
+            params.append('hide_annotated', currentUser);
+        } else if (annotatedFilter === 'only') {
+            params.append('only_annotated', currentUser);
+        }
+    }
     
     return params;
 }
@@ -395,6 +530,7 @@ function resetFilters() {
     document.getElementById('filter-after-question').value = '';
     document.getElementById('filter-a-backchannel').value = '';
     document.getElementById('filter-lexicon').value = '';
+    if (document.getElementById('filter-category')) document.getElementById('filter-category').value = '';
     currentPage = 1;
     loadCandidates();
 }
@@ -447,13 +583,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('user-login').style.display = 'none';
         document.getElementById('user-info').style.display = 'flex';
         document.getElementById('current-user').textContent = savedUser;
-        document.getElementById('hide-annotated-container').style.display = 'flex';
+        document.getElementById('filter-annotated').style.display = 'inline-block';
         loadUserAnnotations();
     }
     
     loadStats();
     loadDocuments();
     loadLexicon();
+    loadCategories();
     loadCandidates();
     
     // Filter change listeners - reset to page 1 when filters change
@@ -476,7 +613,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('filter-after-question').addEventListener('change', resetPageAndLoad);
     document.getElementById('filter-a-backchannel').addEventListener('change', resetPageAndLoad);
     document.getElementById('filter-lexicon').addEventListener('change', resetPageAndLoad);
-    document.getElementById('filter-hide-annotated').addEventListener('change', resetPageAndLoad);
+    if (document.getElementById('filter-category')) {
+        document.getElementById('filter-category').addEventListener('change', resetPageAndLoad);
+    }
+    document.getElementById('filter-annotated').addEventListener('change', resetPageAndLoad);
     
     // Search with debounce
     let searchTimeout;

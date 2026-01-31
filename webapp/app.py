@@ -36,20 +36,31 @@ app = Flask(__name__)
 
 # Load backchannel lexicon from file
 def load_lexicon():
+    """Load lexicon with categories from pipe-separated format: word|category"""
     lexicon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'lexicon', 'sl_backchannels.txt')
     lexicon = []
+    categories = {}  # word -> category mapping
     try:
         with open(lexicon_path, 'r', encoding='utf-8') as f:
             for line in f:
                 line = line.strip()
                 if line and not line.startswith('#'):
-                    lexicon.append(line.lower())
+                    if '|' in line:
+                        word, category = line.split('|', 1)
+                        word = word.strip().lower()
+                        category = category.strip().lower()
+                        lexicon.append(word)
+                        categories[word] = category
+                    else:
+                        # Backwards compatibility for plain words
+                        lexicon.append(line.lower())
     except FileNotFoundError:
         print(f"Warning: Lexicon file not found at {lexicon_path}")
-    return sorted(lexicon)
+    return sorted(lexicon), categories
 
-LEXICON = load_lexicon()
+LEXICON, CATEGORIES = load_lexicon()
 print(f"Loaded {len(LEXICON)} lexicon words for webapp")
+print(f"Categories: {set(CATEGORIES.values())}")
 
 # Path to CSV file
 CSV_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 
@@ -113,19 +124,22 @@ def get_candidates():
     doc_filter = request.args.get('doc', '').lower()
     continuation = request.args.get('continuation', '')
     lexicon_filter = request.args.get('lexicon', '')  # Get lexicon filter
+    category_filter = request.args.get('category', '')  # Get category filter
     hide_annotated_user = request.args.get('hide_annotated', '')  # Get user for hiding annotated
+    only_annotated_user = request.args.get('only_annotated', '')  # Get user for showing only annotated
     
     # Parse lexicon words
     lexicon_words = []
     if lexicon_filter:
         lexicon_words = [w.strip().lower() for w in lexicon_filter.split(',') if w.strip()]
     
-    # Load user's annotations if hide_annotated is requested
+    # Load user's annotations if filter is requested
     annotated_ids = set()
-    if hide_annotated_user:
+    if hide_annotated_user or only_annotated_user:
+        user_name = hide_annotated_user or only_annotated_user
         conn = sqlite3.connect('annotations.db')
         c = conn.cursor()
-        c.execute('SELECT candidate_id FROM annotations WHERE user_name = ?', (hide_annotated_user,))
+        c.execute('SELECT candidate_id FROM annotations WHERE user_name = ?', (user_name,))
         annotated_ids = {row[0] for row in c.fetchall()}
         conn.close()
     
@@ -141,11 +155,13 @@ def get_candidates():
     
     filtered = []
     for c in candidates:
-        # Hide annotated filter - check first to skip annotated ones
-        if hide_annotated_user:
-            candidate_id = f"{c['doc']}_{c['A_sent_id']}_{c['B_sent_id']}"
-            if candidate_id in annotated_ids:
-                continue
+        candidate_id = f"{c['doc']}_{c['A_sent_id']}_{c['B_sent_id']}"
+        
+        # Annotation filter
+        if hide_annotated_user and candidate_id in annotated_ids:
+            continue  # Skip annotated
+        if only_annotated_user and candidate_id not in annotated_ids:
+            continue  # Skip non-annotated
         
         # Confidence filter
         if confidence_filter and c['confidence'] != confidence_filter:
@@ -180,6 +196,10 @@ def get_candidates():
             b_tokens = c.get('B_tokens', '').lower().split()
             if not any(word in b_tokens for word in lexicon_words):
                 continue
+        
+        # Category filter - check if backchannel_type matches
+        if category_filter and c.get('backchannel_type', '') != category_filter:
+            continue
         
         # Continuation type filter
         if continuation:
@@ -251,7 +271,11 @@ def get_documents():
 def get_lexicon():
     """Get backchannel lexicon words"""
     return jsonify(sorted(LEXICON))
-    return jsonify(stats)
+
+@app.route('/api/categories')
+def get_categories():
+    """Get available backchannel categories"""
+    return jsonify(sorted(set(CATEGORIES.values())))
 
 @app.route('/api/annotate', methods=['POST'])
 def save_annotation():
@@ -296,6 +320,50 @@ def get_user_annotations(user_name):
     
     annotations = {row[0]: row[1] for row in rows}
     return jsonify(annotations)
+
+@app.route('/api/unannotate', methods=['POST'])
+def delete_annotation():
+    """Delete a user annotation"""
+    data = request.json
+    user_name = data.get('user_name')
+    candidate_id = data.get('candidate_id')
+    
+    if not all([user_name, candidate_id]):
+        return jsonify({'error': 'Missing required fields'}), 400
+    
+    db_path = os.path.join(os.path.dirname(__file__), 'annotations.db')
+    conn = sqlite3.connect(db_path)
+    c = conn.cursor()
+    
+    try:
+        c.execute('DELETE FROM annotations WHERE user_name = ? AND candidate_id = ?',
+                  (user_name, candidate_id))
+        conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/clear-annotations/<user_name>', methods=['POST'])
+def clear_user_annotations(user_name):
+    """Delete all annotations for a user"""
+    if not user_name:
+        return jsonify({'error': 'Missing user_name'}), 400
+    
+    db_path = os.path.join(os.path.dirname(__file__), 'annotations.db')
+    conn = sqlite3.connect(db_path)
+    c = conn.cursor()
+    
+    try:
+        c.execute('DELETE FROM annotations WHERE user_name = ?', (user_name,))
+        deleted_count = c.rowcount
+        conn.commit()
+        return jsonify({'success': True, 'deleted_count': deleted_count})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
 
 @app.route('/api/annotation-stats')
 def get_annotation_stats():
@@ -349,6 +417,7 @@ def export_csv():
     is_question = request.args.get('is_question', '')
     after_question = request.args.get('after_question', '')
     a_backchannel = request.args.get('a_backchannel', '')
+    category_filter = request.args.get('category', '')
     lexicon_words = request.args.get('lexicon', '').split(',') if request.args.get('lexicon') else []
     
     filtered = []
@@ -386,6 +455,8 @@ def export_csv():
         if after_question and c['B_after_question'] != after_question:
             continue
         if a_backchannel and c['A_looks_like_backchannel'] != a_backchannel:
+            continue
+        if category_filter and c.get('backchannel_type', '') != category_filter:
             continue
         if lexicon_words:
             # Check if B_tokens contains any of the selected lexicon words

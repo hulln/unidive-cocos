@@ -1,58 +1,85 @@
-# Slovenian backchannel lexicon
-# One word per line, lowercase
+# Slovenian backchannel lexicon with categories
+# Format: word|category
+# Categories: continuer, agreement, understanding, assessment, filler, laughter, surprise
 # Lines starting with # are comments
 
-# Sound-based backchannels (non-lexical)
-mhm
-mh
-mhmh
-mm
-mmm
-hmm
-hm
+# CONTINUERS - "keep talking" signals (non-lexical sounds and minimal markers)
+mhm|continuer
+mh|continuer
+mhmh|continuer
+mm|continuer
+m m|continuer
+mmm|continuer
+hmm|continuer
+hm|continuer
+a|continuer
+aa|continuer
+aaa|continuer
 
-# Agreement and confirmation markers
-ja
-aha
-aja
-ne
-no
-ok
-okej
-prav
-tako
-res
+# AGREEMENTS - affirming content, confirmation
+ja|agreement
+ne|agreement
+no|agreement
+ok|agreement
+okej|agreement
+prav|agreement
+tako|agreement
+res|agreement
+seveda|agreement
+tako je|agreement
+res je|agreement
+ja saj|agreement
 
-# Positive assessment markers
-dobro
-super
-fajn
-seveda
-vredu
-redu
+# UNDERSTANDING - comprehension checks
+aha|understanding
+aja|understanding
+razumem|understanding
 
-# Attention signals and minimal markers
-a
-aa
-aaa
+# ASSESSMENTS - positive evaluations
+dobro|assessment
+super|assessment
+fajn|assessment
+vredu|assessment
+v redu|assessment
 
-# Fillers and hesitations
-eee
-eem
-em
+# FILLERS - hesitation markers (may indicate self-talk, not addressee-directed)
+eee|filler
+eem|filler
+em|filler
 
-# Reactions and exclamations
-ha
-ah
-oh
-eh
-ojej
-joj
+# LAUGHTER - reactive laughter expressions
+haha|laughter
+hehe|laughter
+hihi|laughter
+hihihi|laughter
+huhu|laughter
+hahaha|laughter
+hehehe|laughter
 
-# Polite continuers
-prosim
-razumem
+# SURPRISE - surprise and exclamation markers (short reactive expressions)
+ha|surprise
+ah|surprise
+oh|surprise
+eh|surprise
+oo|surprise
+ooo|surprise
+oho|surprise
+ohoho|surprise
+wow|surprise
+woow|surprise
+vau|surprise
+vaau|surprise
+uau|surprise
+ojoj|surprise
+joj|surprise
+ojej|surprise
+jej|surprise
+jejhata|surprise
 
-# Reactive questions (may be flagged if used as content questions)
-kaj
-kako
+# POLITE MARKERS
+prosim|continuer
+
+# REACTIVE QUESTIONS (allowed only as standalone exclamations like "kaj?!", "kako?!")
+# Multi-word uses are filtered out by has_question_words() function
+kaj|surprise
+kako|surprise
