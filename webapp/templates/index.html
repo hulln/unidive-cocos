@@ -112,6 +112,11 @@
                 </select>
 
                 <input type="text" id="filter-search" placeholder="Search text..." style="width: 130px;" title="Search for specific words in the A or B utterance text">
+                
+                <label id="hide-annotated-container" style="display: none; align-items: center; gap: 6px; cursor: pointer; user-select: none;" title="Hide candidates you have already annotated">
+                    <input type="checkbox" id="filter-hide-annotated" style="cursor: pointer;">
+                    <span>Hide annotated</span>
+                </label>
 
                 <button id="btn-reset" class="btn-secondary" title="Clear all filters and show all candidates">Reset</button>
                 <button id="btn-export" class="btn-primary" title="Download currently filtered candidates as CSV file">Export CSV</button>

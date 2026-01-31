@@ -24,6 +24,9 @@ function setUserName() {
     document.getElementById('user-info').style.display = 'flex';
     document.getElementById('current-user').textContent = name;
     
+    // Show hide annotated checkbox
+    document.getElementById('hide-annotated-container').style.display = 'flex';
+    
     loadUserAnnotations();
 }
 
@@ -35,6 +38,10 @@ function logoutUser() {
     document.getElementById('user-login').style.display = 'flex';
     document.getElementById('user-info').style.display = 'none';
     document.getElementById('user-name-input').value = '';
+    
+    // Hide and uncheck the filter
+    document.getElementById('hide-annotated-container').style.display = 'none';
+    document.getElementById('filter-hide-annotated').checked = false;
     
     loadCandidates();
 }
@@ -300,6 +307,7 @@ function getFilterParams() {
     const afterQuestion = document.getElementById('filter-after-question').value;
     const aBackchannel = document.getElementById('filter-a-backchannel').value;
     const lexicon = document.getElementById('filter-lexicon').value;
+    const hideAnnotated = document.getElementById('filter-hide-annotated').checked;
     
     if (confidence) params.append('confidence', confidence);
     if (sort) params.append('sort', sort);
@@ -315,6 +323,7 @@ function getFilterParams() {
     if (afterQuestion) params.append('after_question', afterQuestion);
     if (aBackchannel) params.append('a_backchannel', aBackchannel);
     if (lexicon) params.append('lexicon', lexicon);
+    if (hideAnnotated && currentUser) params.append('hide_annotated', currentUser);
     
     return params;
 }
@@ -438,6 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('user-login').style.display = 'none';
         document.getElementById('user-info').style.display = 'flex';
         document.getElementById('current-user').textContent = savedUser;
+        document.getElementById('hide-annotated-container').style.display = 'flex';
         loadUserAnnotations();
     }
     
@@ -466,6 +476,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('filter-after-question').addEventListener('change', resetPageAndLoad);
     document.getElementById('filter-a-backchannel').addEventListener('change', resetPageAndLoad);
     document.getElementById('filter-lexicon').addEventListener('change', resetPageAndLoad);
+    document.getElementById('filter-hide-annotated').addEventListener('change', resetPageAndLoad);
     
     // Search with debounce
     let searchTimeout;
