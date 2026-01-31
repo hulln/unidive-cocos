@@ -113,11 +113,21 @@ def get_candidates():
     doc_filter = request.args.get('doc', '').lower()
     continuation = request.args.get('continuation', '')
     lexicon_filter = request.args.get('lexicon', '')  # Get lexicon filter
+    hide_annotated_user = request.args.get('hide_annotated', '')  # Get user for hiding annotated
     
     # Parse lexicon words
     lexicon_words = []
     if lexicon_filter:
         lexicon_words = [w.strip().lower() for w in lexicon_filter.split(',') if w.strip()]
+    
+    # Load user's annotations if hide_annotated is requested
+    annotated_ids = set()
+    if hide_annotated_user:
+        conn = sqlite3.connect('annotations.db')
+        c = conn.cursor()
+        c.execute('SELECT candidate_id FROM annotations WHERE user_name = ?', (hide_annotated_user,))
+        annotated_ids = {row[0] for row in c.fetchall()}
+        conn.close()
     
     # Pagination parameters
     page = request.args.get('page', 1, type=int)
@@ -131,6 +141,12 @@ def get_candidates():
     
     filtered = []
     for c in candidates:
+        # Hide annotated filter - check first to skip annotated ones
+        if hide_annotated_user:
+            candidate_id = f"{c['doc']}_{c['A_sent_id']}_{c['B_sent_id']}"
+            if candidate_id in annotated_ids:
+                continue
+        
         # Confidence filter
         if confidence_filter and c['confidence'] != confidence_filter:
             continue
@@ -408,26 +424,41 @@ def export_csv():
 
 @app.route('/api/export-annotations/<user_name>')
 def export_annotations(user_name):
+    """Export all candidates with user's annotations in the keep? column"""
+    # Load all candidates
+    candidates = load_candidates()
+    
+    # Load user's annotations
     conn = sqlite3.connect('annotations.db')
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     
-    c.execute('''SELECT user_name, candidate_id, doc, a_sent_id, b_sent_id, vote, timestamp 
+    c.execute('''SELECT candidate_id, vote 
                  FROM annotations 
-                 WHERE user_name = ?
-                 ORDER BY timestamp''', (user_name,))
+                 WHERE user_name = ?''', (user_name,))
     
-    annotations = [dict(row) for row in c.fetchall()]
+    annotations = {row['candidate_id']: row['vote'] for row in c.fetchall()}
     conn.close()
     
+    # Add keep? column based on annotations
+    for candidate in candidates:
+        candidate_id = f"{candidate['doc']}_{candidate['A_sent_id']}_{candidate['B_sent_id']}"
+        if candidate_id in annotations:
+            # Y if yes, N if no
+            candidate['keep?'] = 'Y' if annotations[candidate_id] == 'yes' else 'N'
+        else:
+            # Empty if not annotated
+            candidate['keep?'] = ''
+    
+    # Create CSV with all candidate data
     output = io.StringIO()
-    if annotations:
-        writer = csv.DictWriter(output, fieldnames=['user_name', 'candidate_id', 'doc', 'a_sent_id', 'b_sent_id', 'vote', 'timestamp'])
+    if candidates:
+        writer = csv.DictWriter(output, fieldnames=candidates[0].keys())
         writer.writeheader()
-        writer.writerows(annotations)
+        writer.writerows(candidates)
     
     response = Response(output.getvalue(), mimetype='text/csv')
-    response.headers['Content-Disposition'] = f'attachment; filename=annotations_{user_name}.csv'
+    response.headers['Content-Disposition'] = f'attachment; filename=backchannel_candidates_annotated_{user_name}.csv'
     return response
 
 if __name__ == '__main__':
