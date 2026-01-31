@@ -20,11 +20,20 @@
                     <div id="user-info" style="display: none;">
                         <span style="font-weight: 600; color: #667eea;">👤 <span id="current-user"></span></span>
                         <span style="margin: 0 10px; color: #9ca3af;">|</span>
-                        <span style="color: #6b7280;">Annotations: <strong id="user-annotation-count">0</strong></span>
+                        <div class="progress-container">
+                            <div class="progress-info">
+                                <span class="progress-label">Progress:</span>
+                                <span class="progress-text"><strong id="user-annotation-count">0</strong> / <span id="total-candidates-count">0</span></span>
+                                <span class="progress-percent" id="progress-percent">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                            </div>
+                        </div>
                         <div class="user-actions">
-                            <button onclick="clearAllAnnotations()" class="btn-user-action btn-clear" title="Remove all your annotations">🗑️ Clear All</button>
-                            <button onclick="exportAnnotations()" class="btn-user-action btn-export">📥 Export CSV</button>
-                            <button onclick="logoutUser()" class="btn-user-action">Logout</button>
+                            <button onclick="clearAllAnnotations()" class="btn-secondary" title="Remove all your annotations">Clear All</button>
+                            <button onclick="exportAnnotations()" class="btn-primary">Export CSV</button>
+                            <button onclick="logoutUser()" class="btn-secondary">Logout</button>
                         </div>
                     </div>
                 </div>
