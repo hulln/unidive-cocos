@@ -3,6 +3,7 @@ let currentAudio = null;
 let currentPage = 1;
 const itemsPerPage = 20;
 let totalItems = 0;
+let totalCandidates = 0; // Store total count for progress
 let currentUser = null;
 let userAnnotations = {};
 let lexiconWords = [];
@@ -20,6 +21,17 @@ function toggleAdvancedFilters() {
         advancedSection.style.display = 'none';
         toggleBtn.classList.remove('active');
     }
+}
+
+// Update progress bar
+function updateProgress() {
+    const annotatedCount = Object.keys(userAnnotations).length;
+    document.getElementById('user-annotation-count').textContent = annotatedCount;
+    document.getElementById('total-candidates-count').textContent = totalCandidates;
+    
+    const percent = totalCandidates > 0 ? Math.round((annotatedCount / totalCandidates) * 100) : 0;
+    document.getElementById('progress-percent').textContent = percent + '%';
+    document.getElementById('progress-fill').style.width = percent + '%';
 }
 
 // User management
@@ -67,7 +79,7 @@ async function loadUserAnnotations() {
     try {
         const response = await fetch(`/api/annotations/${encodeURIComponent(currentUser)}`);
         userAnnotations = await response.json();
-        document.getElementById('user-annotation-count').textContent = Object.keys(userAnnotations).length;
+        updateProgress();
         loadCandidates();
     } catch (error) {
         console.error('Error loading annotations:', error);
@@ -104,7 +116,7 @@ async function saveAnnotation(candidateId, doc, aSentId, bSentId, vote) {
         
         if (response.ok) {
             userAnnotations[candidateId] = vote;
-            document.getElementById('user-annotation-count').textContent = Object.keys(userAnnotations).length;
+            updateProgress();
             loadCandidates();
         }
     } catch (error) {
@@ -135,7 +147,7 @@ async function unannotate(candidateId) {
         
         if (response.ok) {
             delete userAnnotations[candidateId];
-            document.getElementById('user-annotation-count').textContent = Object.keys(userAnnotations).length;
+            updateProgress();
             loadCandidates();
         }
     } catch (error) {
@@ -168,7 +180,7 @@ async function clearAllAnnotations() {
         if (response.ok) {
             const data = await response.json();
             userAnnotations = {};
-            document.getElementById('user-annotation-count').textContent = '0';
+            updateProgress();
             alert(`Removed ${data.deleted_count} annotations`);
             loadCandidates();
         }
@@ -354,6 +366,10 @@ async function loadStats() {
         document.getElementById('stat-high').textContent = stats.HIGH;
         document.getElementById('stat-medium').textContent = stats.MEDIUM;
         document.getElementById('stat-low').textContent = stats.LOW;
+        
+        // Store total for progress calculation
+        totalCandidates = stats.total;
+        updateProgress();
     } catch (error) {
         console.error('Error loading stats:', error);
     }
