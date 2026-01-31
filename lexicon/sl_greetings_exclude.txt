@@ -11,6 +11,7 @@ lep dan
 lep večer
 lepa noč
 lepo jutro
+lep pozdrav
 
 # Hello/goodbye
 živjo
@@ -18,3 +19,6 @@ zdravo
 adijo
 nasvidenje
 zbogom
+
+# Non-backchannel phrases (propositional content)
+ne vem

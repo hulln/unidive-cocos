@@ -21,8 +21,11 @@
                         <span style="font-weight: 600; color: #667eea;">👤 <span id="current-user"></span></span>
                         <span style="margin: 0 10px; color: #9ca3af;">|</span>
                         <span style="color: #6b7280;">Annotations: <strong id="user-annotation-count">0</strong></span>
-                        <button onclick="logoutUser()" class="btn-secondary" style="margin-left: 10px; padding: 6px 12px; font-size: 12px;">Logout</button>
-                        <button onclick="exportAnnotations()" class="btn-primary" style="margin-left: 10px; padding: 6px 12px; font-size: 12px;">📥 Export CSV</button>
+                        <div class="user-actions">
+                            <button onclick="clearAllAnnotations()" class="btn-user-action btn-clear" title="Remove all your annotations">🗑️ Clear All</button>
+                            <button onclick="exportAnnotations()" class="btn-user-action btn-export">📥 Export CSV</button>
+                            <button onclick="logoutUser()" class="btn-user-action">Logout</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -48,78 +51,99 @@
 
         <!-- Filters -->
         <div class="filters">
-            <div class="filters-row">
-                <select id="filter-confidence" title="Filter by confidence level: HIGH (best backchannels), MEDIUM (good with warnings), LOW (questionable)">
-                    <option value="">All quality levels</option>
-                    <option value="HIGH">HIGH</option>
-                    <option value="MEDIUM">MEDIUM</option>
-                    <option value="LOW">LOW</option>
-                </select>
-                
-                <select id="filter-sort" title="Sort candidates by score or length">
-                    <option value="">Sort by...</option>
-                    <option value="score_desc">Score ↓</option>
-                    <option value="score_asc">Score ↑</option>
-                    <option value="tokens_asc">Length ↑</option>
-                    <option value="tokens_desc">Length ↓</option>
-                </select>
+            <!-- Basic Filters -->
+            <div class="filters-section filters-basic">
+                <div class="filters-row">
+                    <select id="filter-confidence" title="Filter by confidence level: HIGH (best backchannels), MEDIUM (good with warnings), LOW (questionable)">
+                        <option value="">All quality levels</option>
+                        <option value="HIGH">HIGH</option>
+                        <option value="MEDIUM">MEDIUM</option>
+                        <option value="LOW">LOW</option>
+                    </select>
+                    
+                    <select id="filter-sort" title="Sort candidates by score or length">
+                        <option value="">Sort by...</option>
+                        <option value="score_desc">Score ↓</option>
+                        <option value="score_asc">Score ↑</option>
+                        <option value="tokens_asc">Length ↑</option>
+                        <option value="tokens_desc">Length ↓</option>
+                    </select>
 
-                <input type="number" id="filter-min-tokens" placeholder="Min tokens" min="1" style="width: 90px;" title="Minimum number of tokens in B (the backchannel candidate). Ideal: 1-3">
-                <input type="number" id="filter-max-tokens" placeholder="Max tokens" max="20" style="width: 90px;" title="Maximum number of tokens in B (the backchannel candidate). Ideal: 1-3">
+                    <select id="filter-continuation" title="Does speaker A continue talking after B's utterance? Immediate continuation = strongest evidence B is backchannel">
+                        <option value="">All continuations</option>
+                        <option value="immediate">Immediate</option>
+                        <option value="windowed">Windowed</option>
+                        <option value="none">None</option>
+                    </select>
 
-                <input type="number" id="filter-min-score" placeholder="Min score" min="0" max="100" style="width: 85px;" title="Minimum confidence score (0-100). Higher = more confident backchannel">
-                <input type="number" id="filter-max-score" placeholder="Max score" min="0" max="100" style="width: 85px;" title="Maximum confidence score (0-100). Higher = more confident backchannel">
+                    <select id="filter-category" title="Filter by backchannel category: continuer, agreement, understanding, assessment, or filler">
+                        <option value="">Category: All</option>
+                    </select>
 
-                <select id="filter-continuation" title="Does speaker A continue talking after B's utterance? Immediate continuation = strongest evidence B is backchannel">
-                    <option value="">All continuations</option>
-                    <option value="immediate">Immediate</option>
-                    <option value="windowed">Windowed</option>
-                    <option value="none">None</option>
-                </select>
+                    <select id="filter-annotated" style="display: none;" title="Show, hide, or only show annotated candidates">
+                        <option value="all">All candidates</option>
+                        <option value="hide">Hide annotated</option>
+                        <option value="only">Only annotated</option>
+                    </select>
+                </div>
+
+                <div class="filters-row">
+                    <select id="filter-has-content" title="Does B contain content words (verbs, nouns, adjectives)? Backchannels should be simple particles without content words">
+                        <option value="">Content words: any</option>
+                        <option value="0">No content words ✓</option>
+                        <option value="1">Has content words ⚠</option>
+                    </select>
+
+                    <select id="filter-is-question" title="Is B a multi-token question? Questions are typically not backchannels">
+                        <option value="">Is question: any</option>
+                        <option value="0">Not question ✓</option>
+                        <option value="1">Is question ⚠</option>
+                    </select>
+
+                    <select id="filter-after-question" title="Does B come after A asked a question? If yes, B might be an answer rather than backchannel">
+                        <option value="">After question: any</option>
+                        <option value="0">Not after question ✓</option>
+                        <option value="1">After question ⚠</option>
+                    </select>
+
+                    <select id="filter-a-backchannel" title="Does A (the previous utterance) look like a backchannel itself? If yes, the direction might be wrong">
+                        <option value="">A is backchannel: any</option>
+                        <option value="0">A not backchannel ✓</option>
+                        <option value="1">A is backchannel ⚠</option>
+                    </select>
+
+                    <input type="text" id="filter-search" placeholder="Search text..." style="width: 130px;" title="Search for specific words in the A or B utterance text">
+
+                    <button id="btn-toggle-advanced" class="btn-toggle-advanced" onclick="toggleAdvancedFilters()" title="Show/hide advanced filters">
+                        <span class="toggle-icon">▶</span> Advanced
+                    </button>
+
+                    <button id="btn-reset" class="btn-secondary" title="Clear all filters and show all candidates">Reset</button>
+                    <button id="btn-export" class="btn-primary" title="Download currently filtered candidates as CSV file">Export CSV</button>
+                </div>
             </div>
 
-            <div class="filters-row">
-                <select id="filter-has-content" title="Does B contain content words (verbs, nouns, adjectives)? Backchannels should be simple particles without content words">
-                    <option value="">Content words: any</option>
-                    <option value="0">No content words ✓</option>
-                    <option value="1">Has content words ⚠</option>
-                </select>
+            <!-- Advanced Filters (collapsible) -->
+            <div class="filters-section filters-advanced" id="advanced-filters" style="display: none;">
+                <div class="filters-row">
+                    <span class="filter-label">Tokens:</span>
+                    <input type="number" id="filter-min-tokens" placeholder="Min" min="1" style="width: 70px;" title="Minimum number of tokens in B (the backchannel candidate). Ideal: 1-3">
+                    <span class="filter-separator">-</span>
+                    <input type="number" id="filter-max-tokens" placeholder="Max" max="20" style="width: 70px;" title="Maximum number of tokens in B (the backchannel candidate). Ideal: 1-3">
 
-                <select id="filter-is-question" title="Is B a multi-token question? Questions are typically not backchannels">
-                    <option value="">Is question: any</option>
-                    <option value="0">Not question ✓</option>
-                    <option value="1">Is question ⚠</option>
-                </select>
+                    <span class="filter-label" style="margin-left: 15px;">Score:</span>
+                    <input type="number" id="filter-min-score" placeholder="Min" min="0" max="100" style="width: 70px;" title="Minimum confidence score (0-100). Higher = more confident backchannel">
+                    <span class="filter-separator">-</span>
+                    <input type="number" id="filter-max-score" placeholder="Max" min="0" max="100" style="width: 70px;" title="Maximum confidence score (0-100). Higher = more confident backchannel">
 
-                <select id="filter-after-question" title="Does B come after A asked a question? If yes, B might be an answer rather than backchannel">
-                    <option value="">After question: any</option>
-                    <option value="0">Not after question ✓</option>
-                    <option value="1">After question ⚠</option>
-                </select>
+                    <select id="filter-lexicon" title="Filter by lexicon word">
+                        <option value="">Lexicon word: All</option>
+                    </select>
 
-                <select id="filter-a-backchannel" title="Does A (the previous utterance) look like a backchannel itself? If yes, the direction might be wrong">
-                    <option value="">A is backchannel: any</option>
-                    <option value="0">A not backchannel ✓</option>
-                    <option value="1">A is backchannel ⚠</option>
-                </select>
-
-                <select id="filter-lexicon" title="Filter by lexicon word">
-                    <option value="">Lexicon word: All</option>
-                </select>
-
-                <select id="filter-doc" title="Filter by specific document ID. Select 'All' to see all documents">
-                    <option value="">Document: All</option>
-                </select>
-
-                <input type="text" id="filter-search" placeholder="Search text..." style="width: 130px;" title="Search for specific words in the A or B utterance text">
-                
-                <label id="hide-annotated-container" style="display: none; align-items: center; gap: 6px; cursor: pointer; user-select: none;" title="Hide candidates you have already annotated">
-                    <input type="checkbox" id="filter-hide-annotated" style="cursor: pointer;">
-                    <span>Hide annotated</span>
-                </label>
-
-                <button id="btn-reset" class="btn-secondary" title="Clear all filters and show all candidates">Reset</button>
-                <button id="btn-export" class="btn-primary" title="Download currently filtered candidates as CSV file">Export CSV</button>
+                    <select id="filter-doc" title="Filter by specific document ID. Select 'All' to see all documents">
+                        <option value="">Document: All</option>
+                    </select>
+                </div>
             </div>
         </div>
 

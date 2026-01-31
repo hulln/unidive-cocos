@@ -11,20 +11,37 @@ from typing import Dict, Iterable, List, Optional, Tuple
 
 PUNCT_RE = re.compile(r"^\W+$", re.UNICODE)
 
-def load_lexicon_from_file(path: Path) -> set[str]:
-    """Load lexicon from file, skipping comments and empty lines."""
+def load_lexicon_from_file(path: Path) -> Tuple[set[str], Dict[str, str]]:
+    """Load lexicon from file with categories.
+    
+    Returns:
+        - Set of lexicon words (for quick lookup)
+        - Dict mapping word to category type
+    """
     lexicon = set()
+    categories = {}
     if not path.exists():
         print(f"Warning: Lexicon file not found at {path}")
-        return lexicon
+        return lexicon, categories
     
     with path.open('r', encoding='utf-8') as f:
         for line in f:
             line = line.strip()
             # Skip comments and empty lines
             if line and not line.startswith('#'):
-                lexicon.add(line.lower())
-    return lexicon
+                # Parse format: word|category or just word (for backwards compatibility)
+                if '|' in line:
+                    word, category = line.split('|', 1)
+                    word = word.strip().lower()
+                    category = category.strip().lower()
+                    lexicon.add(word)
+                    categories[word] = category
+                else:
+                    # Old format without category
+                    word = line.lower()
+                    lexicon.add(word)
+                    categories[word] = 'unspecified'
+    return lexicon, categories
 
 def load_greetings_from_file(path: Path) -> set[str]:
     """Load greeting exclusion phrases from file."""
@@ -159,6 +176,28 @@ def count_lexicon_hits(sent: Sent, lex: set[str]) -> Tuple[int, int, List[str]]:
     hits = sum(1 for f in forms if f in lex)
     return hits, len(forms), forms
 
+def determine_backchannel_type(forms: List[str], categories: Dict[str, str]) -> str:
+    """Determine backchannel type from token forms.
+    
+    Priority: If multiple types, pick the most specific one.
+    Order: assessment > laughter > surprise > understanding > agreement > continuer > filler
+    """
+    found_types = []
+    for form in forms:
+        if form in categories:
+            found_types.append(categories[form])
+    
+    if not found_types:
+        return 'unspecified'
+    
+    # Priority order (most to least specific)
+    priority = ['assessment', 'laughter', 'surprise', 'understanding', 'agreement', 'continuer', 'filler', 'unspecified']
+    for cat in priority:
+        if cat in found_types:
+            return cat
+    
+    return found_types[0]  # fallback
+
 def is_question_like(text: str) -> bool:
     t = (text or "").strip()
     return "?" in t
@@ -176,6 +215,46 @@ def is_greeting_phrase(text: str, greetings: set[str]) -> bool:
     # Remove punctuation for comparison
     normalized = normalized.replace(".", "").replace(",", "").replace("!", "").replace("?", "").strip()
     return normalized in greetings or any(greeting in normalized for greeting in greetings)
+
+def has_filler_markers(sent: Sent) -> bool:
+    """Check if sentence contains filler/hesitation markers (eee, em, etc.)."""
+    toks = nonpunct_tokens(sent)
+    filler_markers = {"eee", "eem", "em", "erm", "mmm"}
+    forms = [norm_form(t.form) for t in toks]
+    return any(f in filler_markers for f in forms)
+
+def has_question_words(sent: Sent) -> bool:
+    """Check if sentence contains Slovenian question words (kaj, kako, kdo, etc.).
+    These indicate content questions, not backchannels.
+    
+    Exceptions: 
+    1. Single-word "kaj?" or "kako?" (including elongated forms like "kaaaj") - surprise/confusion markers
+    2. "kako" + adjective/adverb patterns (e.g., "kako smešno", "vaa kako dober sok") - assessment exclamations
+    """
+    toks = nonpunct_tokens(sent)
+    question_words = {"kaj", "kako", "kdo", "kje", "kdaj", "zakaj", "kam", "kod", "čigav"}
+    forms = [norm_form(t.form) for t in toks]
+    
+    # If it's just a single word, check if it's an allowed exclamation form
+    if len(forms) == 1:
+        word = forms[0]
+        # Allow standalone "kaj" or "kako" (normal or elongated: "kaaaj", "kakooo")
+        # Elongated forms indicate surprise/emotion, not content questions
+        if word.startswith("ka") and all(c in "ajko" for c in word[2:]):
+            return False
+    
+    # Check for "kako + adjective/adverb" exclamation patterns (assessments, not questions)
+    # Examples: "kako smešno" (how funny), "vaa kako dober sok" (wow how good juice)
+    for i, tok in enumerate(toks):
+        if norm_form(tok.form) == "kako":
+            # Check if followed by adjective or adverb (assessment/exclamation)
+            for j in range(i + 1, len(toks)):
+                if toks[j].upos in {"ADJ", "ADV"}:
+                    # This is an exclamation like "kako smešno", not a content question
+                    return False
+    
+    # Otherwise, filter if contains any question word
+    return any(f in question_words for f in forms)
 
 def looks_like_backchannel(sent: Sent, lex: set[str]) -> bool:
     """Check if sentence itself looks like a backchannel (short, lexicon match)."""
@@ -309,8 +388,9 @@ def compute_numeric_confidence(confidence: str, n_tok: int, warning_count: int,
     # Warning penalties
     warning_penalty = warning_count * 15
     
-    # Special penalty: B after question WITH content = likely answer, not backchannel
-    answer_penalty = 40 if is_answer_like else 0
+    # Stronger penalty: B after question ("?") = very likely answer, not backchannel
+    # This is more general than checking specific answer words
+    answer_penalty = 50 if is_answer_like else 0
     
     # Compute final score
     score = base_score + length_bonus - warning_penalty - answer_penalty
@@ -349,13 +429,14 @@ def main():
     path = Path(args.input)
     sents = parse_conllu(path)
 
-    # Load lexicon from file
+    # Load lexicon from file with categories
     lexicon_path = Path(args.lexicon_file) if args.lexicon_file else project_root / "lexicon" / "sl_backchannels.txt"
-    lex = load_lexicon_from_file(lexicon_path)
+    lex, categories = load_lexicon_from_file(lexicon_path)
     if not lex:
         print(f"Error: No lexicon loaded from {lexicon_path}. Please check the file exists.")
         return
     print(f"Loaded {len(lex)} lexicon words from {lexicon_path}")
+    print(f"Categories: {len([c for c in categories.values() if c != 'unspecified'])} categorized, {len([c for c in categories.values() if c == 'unspecified'])} uncategorized")
     
     # Load greetings exclusion list from file
     greetings_path = Path(args.greetings_file) if args.greetings_file else project_root / "lexicon" / "sl_greetings_exclude.txt"
@@ -409,8 +490,17 @@ def main():
         if hits < args.min_lex_hits:
             continue
         
-        # Skip if B is a greeting phrase (only hard filter)
+        # Hard filters:
+        # Skip if B is a greeting phrase
         if is_greeting_phrase(B.text, greeting_phrases):
+            continue
+        
+        # Skip if B is 6+ tokens (violates "samostojno" guideline - not minimal)
+        if n_tok >= 6:
+            continue
+        
+        # Skip if B contains question words (kaj, kako, kdo, etc.) - these are content questions, not backchannels
+        if has_question_words(B):
             continue
         
         # Compute flags (soft filters for manual review)
@@ -419,6 +509,7 @@ def main():
         B_has_content = has_content_structure(B)
         B_is_multi_token_q = is_question_requiring_answer(B)
         B_after_question = A_is_q
+        B_has_filler = has_filler_markers(B)
         
         # FILTER: Skip WRONG_DIR cases where A looks like backchannel and B is long
         # This means we're likely capturing the wrong direction (A is backchannel, not B)
@@ -466,38 +557,47 @@ def main():
             why_parts.append("has discourse relation")
         
         # DOWN-GRADE confidence based on warning flags
-        # Count warning flags
+        # Count warning flags (filler is a minor warning, others are major)
         warning_count = sum([B_has_content, B_is_multi_token_q, B_after_question, A_is_backchannel_like])
+        
+        # Add partial penalty for fillers (0.5 warning)
+        filler_penalty_value = 0.5 if B_has_filler else 0
         
         confidence = base_confidence
         
-        # Special handling: B after question is very suspicious (likely answer, not backchannel)
+        # Special handling: B after question is VERY suspicious (likely answer, not backchannel)
+        # Apply stronger downgrade when A has question mark
         if B_after_question:
             if confidence == "HIGH":
-                confidence = "MEDIUM"  # downgrade HIGH to MEDIUM
+                confidence = "LOW"  # stronger downgrade: HIGH to LOW for question contexts
+            elif confidence == "MEDIUM":
+                confidence = "LOW"  # also downgrade MEDIUM to LOW
         
         # Length check: backchannels typically 1-3 tokens per guidelines  
-        # "samostojno" guideline - long utterances violate this strongly
-        if n_tok >= 6:
-            # 6+ tokens clearly violates "samostojno" - downgrade to LOW
-            confidence = "LOW"
-        elif n_tok > 3 and confidence == "HIGH":
+        # "samostojno" guideline - longer utterances are suspicious
+        # (6+ tokens already filtered out as hard filter above)
+        if n_tok > 3 and confidence == "HIGH":
             confidence = "MEDIUM"  # 4-5 tokens shouldn't be HIGH
         
-        # General warning-based downgrade
-        if warning_count >= 2:
+        # General warning-based downgrade (including filler penalty)
+        effective_warnings = warning_count + filler_penalty_value
+        if effective_warnings >= 2:
             # Multiple warnings -> always LOW (probably not a backchannel)
             confidence = "LOW"
-        elif warning_count == 1:
-            # One warning -> cap at MEDIUM
+        elif effective_warnings >= 1:
+            # One+ warnings -> cap at MEDIUM
             if confidence == "HIGH":
                 confidence = "MEDIUM"
         
         # Compute numeric confidence score (0-100)
-        # Special case: B after question + has content = likely answer, not backchannel
-        is_answer_like = B_after_question and B_has_content
+        # Apply penalties for question context and fillers
+        # Stronger penalty for responses after questions (likely answers)
+        is_answer_like = B_after_question  # Any response after "?" is suspicious
+        
+        # Compute with adjusted warning count including filler penalty
+        adjusted_warnings = warning_count + int(filler_penalty_value)
         numeric_confidence = compute_numeric_confidence(
-            confidence, n_tok, warning_count, has_immediate_aba, 
+            confidence, n_tok, adjusted_warnings, has_immediate_aba, 
             has_windowed_aba if 'has_windowed_aba' in locals() else False,
             is_answer_like=is_answer_like
         )
@@ -513,6 +613,9 @@ def main():
 
         why_candidate = "; ".join(why_parts)
         
+        # Determine backchannel type based on lexicon categories
+        bc_type = determine_backchannel_type(forms, categories)
+        
         # Get A tokens and POS tags for attachment visualization
         A_forms = []
         A_pos = []
@@ -527,6 +630,7 @@ def main():
                 "doc": B.doc,
                 "confidence": confidence,
                 "confidence_score": numeric_confidence,
+                "backchannel_type": bc_type,
                 "A_sent_id": A.sent_id,
                 "A_speaker": A.speaker,
                 "A_text": A.text,
@@ -561,7 +665,7 @@ def main():
     # write CSV
     out = Path(args.output)
     fieldnames = [
-        "doc", "confidence", "confidence_score",
+        "doc", "confidence", "confidence_score", "backchannel_type",
         "A_sent_id", "A_speaker", "A_text", "A_sound_url", "A_tokens", "A_pos_tags",
         "B_sent_id", "B_speaker", "B_text", "B_sound_url",
         "B_tokens", "B_token_count", "why_candidate",
