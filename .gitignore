@@ -32,3 +32,6 @@ package-lock.json
 # OS
 .DS_Store
 Thumbs.db
+
+# Annotation database (local only)
+webapp/annotations.db

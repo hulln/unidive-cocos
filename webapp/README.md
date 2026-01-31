@@ -2,6 +2,10 @@
 
 A modern, clean web interface for reviewing backchannel candidates extracted from the SST corpus.
 
+## Documentation
+
+For a detailed, step-by-step description of how candidate backchannels were extracted and filtered, see [../docs/CANDIDATE_EXTRACTION.md](../docs/CANDIDATE_EXTRACTION.md).
+
 ## Features
 
 - 🎨 **Color-coded confidence levels**: GREEN (HIGH), YELLOW (MEDIUM), RED (LOW)
@@ -52,6 +56,15 @@ Cards show visual warnings for:
 - **Is question**: B is a multi-token question (orange)
 - **After question**: B comes after A's question (pink)
 - **A is backchannel**: A looks like a backchannel (yellow)
+
+## Annotation Data
+
+- Your annotation data is stored locally in `webapp/annotations.db`.
+- This file is **not tracked by git** and will not be shared or overwritten.
+- Each user has their own local annotation database.
+- If you want to start fresh, simply delete `webapp/annotations.db` and it will be recreated automatically.
+
+> **Note:** Do not commit your `annotations.db` to GitHub. If you want to share annotations, use the export feature or coordinate with your team.
 
 ## Development
 

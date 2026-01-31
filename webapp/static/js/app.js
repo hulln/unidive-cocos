@@ -590,6 +590,44 @@ function exportToCSV() {
     window.location.href = `/api/export?${params}`;
 }
 
+function setupAboutModal() {
+    const openBtn = document.getElementById('btn-about');
+    const closeBtn = document.getElementById('btn-about-close');
+    const modal = document.getElementById('about-modal');
+
+    if (!openBtn || !closeBtn || !modal) {
+        return;
+    }
+
+    const openModal = () => {
+        modal.classList.add('open');
+        modal.setAttribute('aria-hidden', 'false');
+        openBtn.setAttribute('aria-expanded', 'true');
+        document.body.classList.add('modal-open');
+    };
+
+    const closeModal = () => {
+        modal.classList.remove('open');
+        modal.setAttribute('aria-hidden', 'true');
+        openBtn.setAttribute('aria-expanded', 'false');
+        document.body.classList.remove('modal-open');
+    };
+
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            closeModal();
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && modal.classList.contains('open')) {
+            closeModal();
+        }
+    });
+}
+
 // Event listeners
 document.addEventListener('DOMContentLoaded', () => {
     // Check if user is already logged in
@@ -648,4 +686,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     document.getElementById('btn-reset').addEventListener('click', resetFilters);
     document.getElementById('btn-export').addEventListener('click', exportToCSV);
+
+    setupAboutModal();
 });
