@@ -349,7 +349,7 @@ def is_near_end_of_doc(sents: List[Sent], i: int, k_end: int) -> bool:
         j += 1
     return (last - i) <= k_end
 
-def compute_numeric_confidence(confidence: str, n_tok: int, warning_count: float, 
+def compute_numeric_confidence(confidence: str, n_tok: int, warning_count: int, 
                                has_immediate_aba: bool, has_windowed_aba: bool,
                                is_answer_like: bool = False) -> int:
     """Compute numeric confidence score 0-100.
@@ -361,10 +361,6 @@ def compute_numeric_confidence(confidence: str, n_tok: int, warning_count: float
     - Base score from continuation pattern
     - Penalties for warnings and length
     - Special penalty for answer-like cases (B after question + has content)
-
-    Notes:
-    - `warning_count` may be fractional (e.g. 0.5 for fillers), to reflect that fillers are
-      a weaker negative signal than major warnings.
     """
     # Start with base score from continuation evidence
     # Guidelines require: "prvotni govorec normalno nadaljuje"
@@ -374,7 +370,7 @@ def compute_numeric_confidence(confidence: str, n_tok: int, warning_count: float
         base_score = 70  # Good evidence: A continues within window
     else:
         base_score = 35  # Very weak: no continuation proof, just short + lexicon match
-
+    
     # Length penalty: backchannels typically 1-3 tokens (guidelines: "samostojno")
     if n_tok == 1:
         length_bonus = 10
@@ -388,19 +384,19 @@ def compute_numeric_confidence(confidence: str, n_tok: int, warning_count: float
         length_bonus = -25  # much stricter
     else:  # 6+ tokens
         length_bonus = -50  # very aggressive penalty - clearly violates "samostojno"
-
-    # Warning penalties (15 points per major warning; fractional warnings scale proportionally)
-    warning_penalty = warning_count * 15.0
-
+    
+    # Warning penalties
+    warning_penalty = warning_count * 15
+    
     # Stronger penalty: B after question ("?") = very likely answer, not backchannel
+    # This is more general than checking specific answer words
     answer_penalty = 50 if is_answer_like else 0
-
+    
     # Compute final score
-    score = float(base_score + length_bonus) - float(warning_penalty) - float(answer_penalty)
-
-    # Clamp to 0-100 and return an int (CSV-friendly)
-    score = max(0.0, min(100.0, score))
-    return int(round(score))
+    score = base_score + length_bonus - warning_penalty - answer_penalty
+    
+    # Clamp to 0-100
+    return max(0, min(100, score))
 
 def main():
     ap = argparse.ArgumentParser(description="Extract backchannel candidates from SST corpus")
@@ -409,8 +405,6 @@ def main():
     ap.add_argument("--min_lex_hits", type=int, default=1, help="Minimum lexicon hits in B")
     ap.add_argument("--window", type=int, default=5, help="Lookahead window for A…B…A continuation")
     ap.add_argument("--end_k", type=int, default=2, help="Consider A-B near end of doc within this many turns")
-    ap.add_argument("--max_tokens", type=int, default=10,
-                    help="Max token length for short-utterance mining (used by --auto_top_short and --add_top_short_to_lexicon)")
     ap.add_argument("--include_no_continuation", action="store_true",
                     help="Also include short B even if we can't prove A continues")
     ap.add_argument("--lexicon_file", default=None, help="Path to lexicon file (default: lexicon/sl_backchannels.txt)")
@@ -451,7 +445,7 @@ def main():
 
     # optional: build top short utterances
     if args.auto_top_short > 0:
-        top = build_top_short_utterances(sents, max_tokens=args.max_tokens)
+        top = build_top_short_utterances(sents, max_tokens=10)
         out_top = Path(args.output).with_suffix("")  # strip .csv if present
         out_top = Path(str(out_top) + ".top_short.csv")
         with out_top.open("w", encoding="utf-8", newline="") as f:
@@ -601,7 +595,7 @@ def main():
         is_answer_like = B_after_question  # Any response after "?" is suspicious
         
         # Compute with adjusted warning count including filler penalty
-        adjusted_warnings = warning_count + filler_penalty_value
+        adjusted_warnings = warning_count + int(filler_penalty_value)
         numeric_confidence = compute_numeric_confidence(
             confidence, n_tok, adjusted_warnings, has_immediate_aba, 
             has_windowed_aba if 'has_windowed_aba' in locals() else False,
@@ -610,10 +604,13 @@ def main():
 
         # flags
         A_root = sent_root_id(A)
+        A_last = last_content_id(A)
 
         B_is_q = is_question_like(B.text)
 
         proposed_root = f"{A.sent_id}::{A_root}" if A_root is not None else ""
+        proposed_last = f"{A.sent_id}::{A_last}" if A_last is not None else ""
+
         why_candidate = "; ".join(why_parts)
         
         # Determine backchannel type based on lexicon categories
@@ -652,7 +649,8 @@ def main():
                 "B_is_question": int(B_is_multi_token_q),
                 "B_after_question": int(B_after_question),
                 "proposed_attach_root": proposed_root,
-"keep?": "",
+                "proposed_attach_last_content": proposed_last,
+                "keep?": "",
             }
         else:
             # merge if we hit same B again (should be rare), keep best confidence
@@ -672,7 +670,7 @@ def main():
         "B_sent_id", "B_speaker", "B_text", "B_sound_url",
         "B_tokens", "B_token_count", "why_candidate",
         "A_looks_like_backchannel", "B_has_content", "B_is_question", "B_after_question",
-        "proposed_attach_root",
+        "proposed_attach_root", "proposed_attach_last_content",
         "keep?"
     ]
     with out.open("w", encoding="utf-8", newline="") as f:
