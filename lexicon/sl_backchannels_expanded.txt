@@ -11,7 +11,6 @@ mhm|continuer
 mh|continuer
 mhmh|continuer
 mm|continuer
-m m|continuer
 mmm|continuer
 hmm|continuer
 hm|continuer
@@ -51,9 +50,6 @@ prav|agreement
 tako|agreement
 res|agreement
 seveda|agreement
-tako je|agreement
-res je|agreement
-ja saj|agreement
 itak|agreement
 pač|agreement
 baje|agreement
@@ -81,7 +77,6 @@ dobro|assessment
 super|assessment
 fajn|assessment
 vredu|assessment
-v redu|assessment
 
 # ============================================================================
 # FILLERS - hesitation markers (may indicate self-talk, not addressee-directed)
@@ -156,6 +151,15 @@ ježeštana|surprise
 # ============================================================================
 kaj|surprise
 kako|surprise
+
+# ============================================================================
+# MULTIWORD BACKCHANNELS (used only when script enables phrase matching)
+# ============================================================================
+m m|continuer
+tako je|agreement
+res je|agreement
+ja saj|agreement
+v redu|assessment
 
 # ============================================================================
 # NOTES:
