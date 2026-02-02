@@ -20,17 +20,6 @@ aaa|continuer
 aam|continuer
 e|continuer
 ee|continuer
-eem|continuer
-een|continuer
-m|continuer
-o|continuer
-oo|continuer
-ooo|continuer
-iii|continuer
-uuu|continuer
-nnn|continuer
-em|continuer
-emm|continuer
 uh|continuer
 uhh|continuer
 hh|continuer
@@ -52,13 +41,6 @@ res|agreement
 seveda|agreement
 itak|agreement
 pač|agreement
-baje|agreement
-menda|agreement
-valjda|agreement
-še|agreement
-tudi|agreement
-samo|agreement
-vsaj|agreement
 
 # ============================================================================
 # UNDERSTANDING - comprehension checks (including verbal expressions)
@@ -85,6 +67,8 @@ eee|filler
 eem|filler
 em|filler
 emm|filler
+m|filler
+mm|filler
 
 # ============================================================================
 # LAUGHTER - reactive laughter expressions
@@ -131,8 +115,6 @@ opa|surprise
 ops|surprise
 opala|surprise
 opsala|surprise
-hej|surprise
-heja|surprise
 ej|surprise
 fak|surprise
 jebemti|surprise
@@ -147,7 +129,6 @@ ježeštana|surprise
 
 # ============================================================================
 # REACTIVE QUESTIONS (allowed only as standalone exclamations like "kaj?!", "kako?!")
-# Multi-word uses are filtered out in code
 # ============================================================================
 kaj|surprise
 kako|surprise
