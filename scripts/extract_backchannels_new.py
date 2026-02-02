@@ -7,11 +7,11 @@ Extraction criteria (HARD FILTERS):
 2. Position: first token must appear in first position of B
 3. Syntactic: first token has deprel = 'discourse' OR 'root' (or discourse subtypes)
 4. All tokens in B must be in lexicon
+   OR (optional) full B phrase exactly matches a multiword lexicon entry
 
 Warning flags (SOFT FILTERS):
 - A_IS_QUESTION: Previous utterance is a question
 - HAS_VERBAL_BC: Contains verbal backchannel (vem, veš, razumem, prosim)
-- REPAIR_INITIATOR: Borderline case (e.g., "kaj?", "kako?" - repair initiators)
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ import argparse
 import csv
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 @dataclass
 class Token:
@@ -41,18 +41,20 @@ class Sent:
     sound_url: str
     tokens: List[Token]
 
-def load_lexicon_from_file(path: Path) -> Tuple[set[str], Dict[str, str]]:
+def load_lexicon_from_file(path: Path) -> Tuple[set[str], Dict[str, str], Dict[str, str]]:
     """Load lexicon from file with categories.
     
     Returns:
-        - Set of lexicon words (for quick lookup)
-        - Dict mapping word to category type
+        - Set of single-word lexicon entries (for quick lookup)
+        - Dict mapping single words to category type
+        - Dict mapping multiword phrases to category type
     """
     lexicon = set()
     categories = {}
+    phrase_categories = {}
     if not path.exists():
         print(f"Warning: Lexicon file not found at {path}")
-        return lexicon, categories
+        return lexicon, categories, phrase_categories
     
     with path.open('r', encoding='utf-8') as f:
         for line in f:
@@ -64,14 +66,20 @@ def load_lexicon_from_file(path: Path) -> Tuple[set[str], Dict[str, str]]:
                     word, category = line.split('|', 1)
                     word = word.strip().lower()
                     category = category.strip().lower()
-                    lexicon.add(word)
-                    categories[word] = category
+                    if " " in word:
+                        phrase_categories[word] = category
+                    else:
+                        lexicon.add(word)
+                        categories[word] = category
                 else:
                     # Old format without category
                     word = line.lower()
-                    lexicon.add(word)
-                    categories[word] = 'unspecified'
-    return lexicon, categories
+                    if " " in word:
+                        phrase_categories[word] = 'unspecified'
+                    else:
+                        lexicon.add(word)
+                        categories[word] = 'unspecified'
+    return lexicon, categories, phrase_categories
 
 def parse_conllu(path: Path) -> List[Sent]:
     """Parse CoNLL-U file and return list of sentences."""
@@ -145,6 +153,11 @@ def norm_form(s: str) -> str:
     """Normalize form to lowercase."""
     return s.strip().lower()
 
+def normalize_token_sequence(sent: Sent) -> str:
+    """Normalize sentence non-punctuation tokens into a space-joined phrase."""
+    forms = [norm_form(t.form) for t in sent.tokens if not is_punct(t)]
+    return " ".join(forms)
+
 def get_first_nonpunct_token(sent: Sent) -> Optional[Token]:
     """Get first non-punctuation token from sentence."""
     for tok in sent.tokens:
@@ -178,7 +191,12 @@ def has_verbal_backchannel(sent: Sent, lex: set[str]) -> bool:
             return True
     return False
 
-def matches_criteria(first_tok: Token, lex: set[str]) -> Tuple[bool, str]:
+def matches_criteria(
+    first_tok: Token,
+    lex: set[str],
+    allow_multiword: bool = False,
+    phrase_first_tokens: Optional[Set[str]] = None,
+) -> Tuple[bool, str]:
     """Check if first token matches all extraction criteria.
     
     Returns:
@@ -187,7 +205,10 @@ def matches_criteria(first_tok: Token, lex: set[str]) -> Tuple[bool, str]:
     form_lower = norm_form(first_tok.form)
     
     # Criterion 1: Must be in lexicon
-    if form_lower not in lex:
+    first_token_ok = form_lower in lex
+    if allow_multiword and phrase_first_tokens and form_lower in phrase_first_tokens:
+        first_token_ok = True
+    if not first_token_ok:
         return False, "first token not in lexicon"
     
     # Criterion 2: Syntactic - deprel must be 'discourse' or 'root'
@@ -208,6 +229,19 @@ def main():
                    help="Output CSV path (default: output/sst/backchannel_candidates_expanded.csv)")
     ap.add_argument("--lexicon_file", default=None, 
                    help="Path to lexicon file (default: lexicon/sl_backchannels_expanded.txt)")
+    ap.add_argument(
+        "--enable_multiword",
+        dest="enable_multiword",
+        action="store_true",
+        help="Allow exact full-utterance match against multiword lexicon entries (default: enabled)",
+    )
+    ap.add_argument(
+        "--disable_multiword",
+        dest="enable_multiword",
+        action="store_false",
+        help="Disable exact full-utterance match against multiword lexicon entries",
+    )
+    ap.set_defaults(enable_multiword=True)
     args = ap.parse_args()
 
     # Set defaults relative to script location
@@ -224,13 +258,15 @@ def main():
     # Load lexicon
     lexicon_path = (Path(args.lexicon_file) if args.lexicon_file 
                    else project_root / "lexicon" / "sl_backchannels_expanded.txt")
-    lex, categories = load_lexicon_from_file(lexicon_path)
+    lex, categories, phrase_categories = load_lexicon_from_file(lexicon_path)
+    phrase_first_tokens = {phrase.split()[0] for phrase in phrase_categories}
     
     if not lex:
         print(f"Error: No lexicon loaded from {lexicon_path}")
         return
     
     print(f"Loaded {len(lex)} lexicon words from {lexicon_path}")
+    print(f"Loaded {len(phrase_categories)} multiword lexicon entries")
     
     # Parse CoNLL-U
     path = Path(args.input)
@@ -260,17 +296,29 @@ def main():
             continue
         
         # Check if it matches all criteria
-        matches, reason = matches_criteria(first_tok, lex)
+        matches, reason = matches_criteria(
+            first_tok,
+            lex,
+            allow_multiword=args.enable_multiword,
+            phrase_first_tokens=phrase_first_tokens,
+        )
         
         if matches:
             # HARD FILTER: All tokens in B must be in lexicon
             B_all_in_lex = all_tokens_in_lexicon(B, lex)
-            if not B_all_in_lex:
+            B_phrase_norm = normalize_token_sequence(B)
+            B_phrase_in_lex = args.enable_multiword and (B_phrase_norm in phrase_categories)
+            if not B_all_in_lex and not B_phrase_in_lex:
                 continue  # Skip if not all tokens are in lexicon
             
             # Get category from lexicon
             form_lower = norm_form(first_tok.form)
-            bc_type = categories.get(form_lower, 'unspecified')
+            if B_phrase_in_lex:
+                bc_type = phrase_categories.get(B_phrase_norm, 'unspecified')
+                lexicon_match_type = "phrase"
+            else:
+                bc_type = categories.get(form_lower, 'unspecified')
+                lexicon_match_type = "single"
             
             # Get all token forms and POS tags from B
             B_forms = []
@@ -291,8 +339,6 @@ def main():
             # Check warning flags
             A_is_question = is_question_like(A.text)
             B_has_verbal_bc = has_verbal_backchannel(B, lex)
-            B_is_repair = first_tok.upos == 'PRON'  # Repair initiators (kaj?, kako?)
-            
             # Build warnings list
             warnings = []
             if A_is_question:
@@ -300,9 +346,6 @@ def main():
             # Positive indicator: has verbal backchannel (e.g., "ja razumem", "ne vem")
             if B_has_verbal_bc:
                 warnings.append("HAS_VERBAL_BC")
-            # Borderline case: repair initiator (e.g., "kaj?", "kako?")
-            if B_is_repair:
-                warnings.append("REPAIR_INITIATOR")
             
             warnings_str = "; ".join(warnings) if warnings else "OK"
             
@@ -325,10 +368,9 @@ def main():
                 "first_token_upos": first_tok.upos,
                 "first_token_deprel": first_tok.deprel,
                 "backchannel_type": bc_type,
+                "lexicon_match_type": lexicon_match_type,
                 "B_token_count": len(B_forms),
-                "B_all_in_lexicon": int(B_all_in_lex),
                 "B_has_verbal_bc": int(B_has_verbal_bc),
-                "B_is_repair": int(B_is_repair),
                 "A_is_question": int(A_is_question),
                 "warnings": warnings_str,
                 "keep?": "",
@@ -340,10 +382,10 @@ def main():
         "doc", "A_sent_id", "A_speaker", "A_text", "A_sound_url", 
         "A_tokens", "A_pos_tags",
         "B_sent_id", "B_speaker", "B_text", "B_sound_url", 
-        "B_tokens", "B_pos_tags", "B_token_count", "B_all_in_lexicon",
-        "B_has_verbal_bc", "B_is_repair",
+        "B_tokens", "B_pos_tags", "B_token_count",
+        "B_has_verbal_bc",
         "first_token_form", "first_token_lemma", "first_token_upos", "first_token_deprel",
-        "backchannel_type",
+        "backchannel_type", "lexicon_match_type",
         "A_is_question", "warnings",
         "keep?"
     ]
