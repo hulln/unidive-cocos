@@ -1,10 +1,9 @@
 # Backchannel Candidate Extraction (SST speaker view)
 
-This document explains **exactly** how backchannel candidates are extracted from the Slovenian SST corpus (speaker view), how they are filtered/scored, and what the output CSV contains. The aim is **high recall** (capture many true backchannels), while keeping the output reviewable for manual verification.
+This document explains how backchannel candidates are extracted from the Slovenian SST corpus (speaker view), how they are filtered/scored, and what the output CSV contains. The aim is **high recall** (capture many true backchannels), while keeping the output reviewable for manual verification.
 
 Backchannels are operationalised as **short listener reactions** where the original speaker typically continues (A…B…A), and the B turn is **not** an expected answer (e.g. to a question).
 
----
 
 ## 1) Inputs
 
@@ -31,7 +30,6 @@ Matching is case-insensitive on token **FORM** (lowercased).
 A plain-text file (default `sl_greetings_exclude.txt`), one phrase per line.
 Matching is case-insensitive; punctuation `. , ! ?` is stripped before comparison.
 
----
 
 ## 2) Script and key parameters
 
@@ -48,7 +46,6 @@ Outputs:
 - main CSV: path given by `--output`
 - optional “top short utterances” CSV: `--auto_top_short` (if enabled)
 
----
 
 ## 3) Extraction algorithm (step-by-step)
 
@@ -142,7 +139,6 @@ No other attachment suggestions are produced.
 
 `assessment > laughter > surprise > understanding > agreement > continuer > filler > unspecified`
 
----
 
 ## 4) Output CSV schema
 
@@ -160,7 +156,6 @@ Columns:
 - `proposed_attach_root`
 - `keep?` (manual decision placeholder)
 
----
 
 ## 5) Downstream workflow (manual review + corpus update)
 
