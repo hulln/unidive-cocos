@@ -59,6 +59,12 @@ dobro|assessment
 super|assessment
 fajn|assessment
 vredu|assessment
+redu|assessment
+
+# ============================================================================
+# FUNCTION WORDS - used in multiword backchannels (may over-generate)
+# ============================================================================
+v|multiword_starter
 
 # ============================================================================
 # FILLERS - hesitation markers (may indicate self-talk, not addressee-directed)
@@ -132,15 +138,6 @@ ježeštana|surprise
 # ============================================================================
 kaj|surprise
 kako|surprise
-
-# ============================================================================
-# MULTIWORD BACKCHANNELS (used only when script enables phrase matching)
-# ============================================================================
-m m|continuer
-tako je|agreement
-res je|agreement
-ja saj|agreement
-v redu|assessment
 
 # ============================================================================
 # NOTES:
