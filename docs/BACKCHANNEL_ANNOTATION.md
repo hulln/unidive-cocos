@@ -128,7 +128,7 @@ python3 scripts/extract_backchannels_new.py
 
 **Results:**
 - Total candidates: 855
-- Mentor filter (A_is_question=0 & B_all_in_lexicon=1): **386 backchannels**
+- Further filter (A_is_question=0 & B_all_in_lexicon=1): **386 backchannels**
 
 ### 5.2 Apply Annotations
 
@@ -139,7 +139,7 @@ python3 scripts/apply_backchannel_annotations.py
 ```
 
 **Process:**
-1. Loads CSV candidates filtered to mentor's criteria
+1. Loads CSV with filtered candidates
 2. For each candidate, finds root token in utterance A
 3. Adds `Backchannel=A_sent_id::root_token_id` to MISC column of first token in B
 4. Creates new CoNLL-U file with annotations
@@ -152,24 +152,12 @@ python3 scripts/apply_backchannel_annotations.py
 - All annotations point to root tokens (HEAD=0)
 
 ## 6. Statistics
-
-### 6.1 Extraction Results
-
-Total candidates: 855
-- Continuer: 120 (14%)
-- Responsive: 654 (76%)
-- Surprise: 74 (9%)
-- Multiword: 7 (1%)
-
-### 6.2 Final Filter Results (A_is_question=0 & B_all_in_lexicon=1)
+Final filtered results:
+```
+A_is_question = 0  AND  B_all_in_lexicon = 1
+```
 
 **Total: 386 backchannels**
-
-By category:
-- Continuer: 94 (24%)
-- Responsive: 266 (69%)
-- Surprise: 24 (6%)
-- Multiword: 2 (0.5%)
 
 Top words:
 1. ja (169) - responsive
@@ -209,29 +197,7 @@ diff -u src/sst/sl_sst-ud-merged.conllu \
 
 Confirms only MISC column changed, no other modifications.
 
-## 8. References
-
-### 8.1 Project Documentation
-- `docs/coconstructions-backchannels.md` - Original task description
-- `docs/coconstructions-details.md` - Detailed annotation specification
-
-### 8.2 Format Specification
-
-**UniDive T1.5 format:**
-```
-Backchannel=<sent_id>::<token_id>
-```
-
-**Examples from other corpora:**
-- Kiparla: `Backchannel=BOA3017_61::3`
-- Rhapsodie: Similar format with discourse:backchannel deprel
-
-### 8.3 Linguistic References
-- Lerner (1991), Sacks (1992), Ono & Thompson (1996), Helasvuo (2004), Calabria (2023)
-- Backchannels vs co-constructions distinction
-- Speaker-view vs dependency-view annotation principles
-
-## 9. Future Work
+## 8. Future Work
 
 - Manual validation of all 411 annotations
 - Analysis of false positives/negatives
