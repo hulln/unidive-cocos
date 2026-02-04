@@ -2,7 +2,7 @@
 src/
 
 # Outputs
-output/
+# output/
 
 # Word documents (use markdown instead)
 *.docx
