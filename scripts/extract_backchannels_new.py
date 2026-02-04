@@ -257,7 +257,7 @@ def main():
     ap.add_argument("--output", default=None, 
                    help="Output CSV path (default: output/sst/backchannel_candidates_expanded.csv)")
     ap.add_argument("--lexicon_file", default=None, 
-                   help="Path to lexicon file (default: lexicon/sl_backchannels_expanded.txt)")
+                   help="Path to lexicon file (default: lexicon/sl_backchannels.txt)")
     args = ap.parse_args()
 
     # Set defaults relative to script location
@@ -273,7 +273,7 @@ def main():
     
     # Load lexicon
     lexicon_path = (Path(args.lexicon_file) if args.lexicon_file 
-                   else project_root / "lexicon" / "sl_backchannels_expanded.txt")
+                   else project_root / "lexicon" / "sl_backchannels.txt")
     lex, categories = load_lexicon_from_file(lexicon_path)
     
     if not lex:

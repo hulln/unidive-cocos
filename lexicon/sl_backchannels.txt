@@ -1,62 +1,50 @@
-# Slovenian backchannel lexicon with categories
+# Slovenian backchannel lexicon with categories (EXPANDED)
 # Format: word|category
-# Categories: continuer, agreement, understanding, assessment, filler, laughter, surprise
-# Lines starting with # are comments
+# Categories: continuer, responsive, surprise
+# Based on verified INTJ and PART lists from UD guidelines
 
+# ============================================================================
 # CONTINUERS - "keep talking" signals (non-lexical sounds and minimal markers)
+# ============================================================================
 mhm|continuer
 mh|continuer
 mhmh|continuer
 mm|continuer
-m m|continuer
 mmm|continuer
-hmm|continuer
-hm|continuer
-a|continuer
-aa|continuer
-aaa|continuer
 
-# AGREEMENTS - affirming content, confirmation
-ja|agreement
-ne|agreement
-no|agreement
-ok|agreement
-okej|agreement
-prav|agreement
-tako|agreement
-res|agreement
-seveda|agreement
-tako je|agreement
-res je|agreement
-ja saj|agreement
+# ============================================================================
+# RESPONSIVE - acknowledgment, confirmation, understanding, assessment
+# "I hear you / I understand / Continue / That's good"
+# ============================================================================
+ja|responsive
+ok|responsive
+okej|responsive
+prav|responsive
+tako|responsive
+res|responsive
+seveda|responsive
+itak|responsive
+aha|responsive
+aja|responsive
+razumem|responsive
+vem|responsive
+dobro|responsive
+super|responsive
+fajn|responsive
+vredu|responsive
+redu|responsive
 
-# UNDERSTANDING - comprehension checks
-aha|understanding
-aja|understanding
-razumem|understanding
+# ============================================================================
+# FUNCTION WORDS - used in multiword backchannels (may over-generate)
+# ============================================================================
+v|multiword_starter
 
-# ASSESSMENTS - positive evaluations
-dobro|assessment
-super|assessment
-fajn|assessment
-vredu|assessment
-v redu|assessment
-
-# FILLERS - hesitation markers (may indicate self-talk, not addressee-directed)
-eee|filler
-eem|filler
-em|filler
-
-# LAUGHTER - reactive laughter expressions
-haha|laughter
-hehe|laughter
-hihi|laughter
-hihihi|laughter
-huhu|laughter
-hahaha|laughter
-hehehe|laughter
-
+# ============================================================================
 # SURPRISE - surprise and exclamation markers (short reactive expressions)
+# ============================================================================
+a|surprise
+aa|surprise
+aaa|surprise
 ha|surprise
 ah|surprise
 oh|surprise
@@ -65,21 +53,35 @@ oo|surprise
 ooo|surprise
 oho|surprise
 ohoho|surprise
+ohohoho|surprise
 wow|surprise
 woow|surprise
 vau|surprise
 vaau|surprise
+vaa|surprise
 uau|surprise
 ojoj|surprise
+ojojoj|surprise
 joj|surprise
+jojme|surprise
 ojej|surprise
 jej|surprise
 jejhata|surprise
+uf|surprise
+ej|surprise
+ne|surprise
+no|surprise
 
-# POLITE MARKERS
-prosim|continuer
-
+# ============================================================================
 # REACTIVE QUESTIONS (allowed only as standalone exclamations like "kaj?!", "kako?!")
-# Multi-word uses are filtered out by has_question_words() function
+# ============================================================================
 kaj|surprise
 kako|surprise
+
+# ============================================================================
+# CATEGORY LOGIC:
+# - CONTINUER: nasal sounds made with mouth closed (mhm, mm) - minimal engagement
+# - RESPONSIVE: words expressing agreement, understanding, assessment (ja, ok, dobro)
+# - SURPRISE: emotional reactions and exclamations (aaa = ah!, ne/no = oh no!, wow)
+# - Excluded: greetings, laughter, fillers (e/eee/eem/hm)
+# ============================================================================
