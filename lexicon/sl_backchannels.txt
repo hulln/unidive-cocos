@@ -1,4 +1,4 @@
-# Slovenian backchannel lexicon with categories (EXPANDED)
+# Slovenian backchannel lexicon with categories (v1)
 # Format: word|category
 # Categories: continuer, responsive, surprise
 # Based on verified INTJ and PART lists from UD guidelines
@@ -68,9 +68,6 @@ ojej|surprise
 jej|surprise
 jejhata|surprise
 uf|surprise
-ej|surprise
-ne|surprise
-no|surprise
 
 # ============================================================================
 # REACTIVE QUESTIONS (allowed only as standalone exclamations like "kaj?!", "kako?!")
@@ -82,6 +79,6 @@ kako|surprise
 # CATEGORY LOGIC:
 # - CONTINUER: nasal sounds made with mouth closed (mhm, mm) - minimal engagement
 # - RESPONSIVE: words expressing agreement, understanding, assessment (ja, ok, dobro)
-# - SURPRISE: emotional reactions and exclamations (aaa = ah!, ne/no = oh no!, wow)
+# - SURPRISE: emotional reactions and exclamations (aaa = ah!, wow)
 # - Excluded: greetings, laughter, fillers (e/eee/eem/hm)
 # ============================================================================
