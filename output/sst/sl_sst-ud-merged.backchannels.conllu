@@ -7448,7 +7448,7 @@
 # speaker_id = Af-soro-02170
 # sound_url = https://nl.ijs.si/project/gos20/Gos274/Gos274.s30.mp3
 # text = no , fajn .
-1	no	no	PART	Q	_	3	discourse	_	pronunciation=no|Gos2.1_token_id=Gos274.tok141|Backchannel=Gos274.s29::3
+1	no	no	PART	Q	_	3	discourse	_	pronunciation=no|Gos2.1_token_id=Gos274.tok141
 2	,	,	PUNCT	Z	_	1	punct	_	_
 3	fajn	fajn	ADV	Rgp	Degree=Pos	0	root	_	pronunciation=fajn|Gos2.1_token_id=Gos274.tok142
 4	.	.	PUNCT	Z	_	3	punct	_	_
@@ -13301,7 +13301,7 @@
 # speaker_id = Em-nast-00513
 # sound_url = https://nl.ijs.si/project/gos20/Gos162/Gos162.s497.mp3
 # text = ne , ne , ne .
-1	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=ne|Gos2.1_token_id=Gos162.tok3996|Backchannel=Gos162.s496::3
+1	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=ne|Gos2.1_token_id=Gos162.tok3996
 2	,	,	PUNCT	Z	_	3	punct	_	_
 3	ne	ne	PART	Q	Polarity=Neg	1	discourse	_	pronunciation=ne|Gos2.1_token_id=Gos162.tok3997
 4	,	,	PUNCT	Z	_	5	punct	_	_
@@ -29205,7 +29205,7 @@
 # speaker_id = Pn-vsiucenci-10000
 # sound_url = https://nl.ijs.si/project/gos20/Gos013/Gos013.s171.mp3
 # text = ne .
-1	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=nje|Gos2.1_token_id=Gos013.tok1047|Backchannel=Gos013.s170::1
+1	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=nje|Gos2.1_token_id=Gos013.tok1047
 2	.	.	PUNCT	Z	_	1	punct	_	_
 
 # sent_id = Gos013.s172
@@ -43844,7 +43844,7 @@
 # speaker_id = Jm-posl-05627
 # sound_url = https://nl.ijs.si/project/gos20/Gos137/Gos137.s567.mp3
 # text = ja , ne ?
-1	ja	ja	PART	Q	_	0	root	_	pronunciation=ja|Gos2.1_token_id=Gos137.tok6817|Backchannel=Gos137.s566::5
+1	ja	ja	PART	Q	_	0	root	_	pronunciation=ja|Gos2.1_token_id=Gos137.tok6817
 2	,	,	PUNCT	Z	_	3	punct	_	_
 3	ne	ne	PART	Q	Polarity=Neg	1	discourse	_	pronunciation=ne|Gos2.1_token_id=Gos137.tok6818
 4	?	?	PUNCT	Z	_	1	punct	_	_
@@ -49896,7 +49896,7 @@
 # speaker_id = Gm-novi-02048
 # sound_url = https://nl.ijs.si/project/gos20/Gos159/Gos159.s620.mp3
 # text = ne .
-1	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=ne|Gos2.1_token_id=Gos159.tok4807|Backchannel=Gos159.s619::12
+1	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=ne|Gos2.1_token_id=Gos159.tok4807
 2	.	.	PUNCT	Z	_	1	punct	_	_
 
 # sent_id = Gos159.s621
@@ -49991,7 +49991,7 @@
 # speaker_id = Sm-novi-02049
 # sound_url = https://nl.ijs.si/project/gos20/Gos159/Gos159.s628.mp3
 # text = ne .
-1	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=ne|Gos2.1_token_id=Gos159.tok4848|Backchannel=Gos159.s627::5
+1	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=ne|Gos2.1_token_id=Gos159.tok4848
 2	.	.	PUNCT	Z	_	1	punct	_	_
 
 # sent_id = Gos159.s629
@@ -50162,7 +50162,7 @@
 # speaker_id = Sm-novi-02049
 # sound_url = https://nl.ijs.si/project/gos20/Gos159/Gos159.s641.mp3
 # text = joj , ne , ne , ne , ne , ne , ne .
-1	joj	joj	INTJ	I	_	0	root	_	pronunciation=joj|Gos2.1_token_id=Gos159.tok4920|Backchannel=Gos159.s640::1
+1	joj	joj	INTJ	I	_	0	root	_	pronunciation=joj|Gos2.1_token_id=Gos159.tok4920
 2	,	,	PUNCT	Z	_	3	punct	_	_
 3	ne	ne	PART	Q	Polarity=Neg	1	discourse	_	pronunciation=ne|Gos2.1_token_id=Gos159.tok4921
 4	,	,	PUNCT	Z	_	5	punct	_	_
@@ -56195,7 +56195,7 @@
 # speaker_id = Cf-udel-02233
 # sound_url = https://nl.ijs.si/project/gos20/Gos178/Gos178.s190.mp3
 # text = ja , ne vem .
-1	ja	ja	PART	Q	_	4	discourse	_	pronunciation=ja|Gos2.1_token_id=Gos178.tok2054|Backchannel=Gos178.s189::3
+1	ja	ja	PART	Q	_	4	discourse	_	pronunciation=ja|Gos2.1_token_id=Gos178.tok2054
 2	,	,	PUNCT	Z	_	1	punct	_	_
 3	ne	ne	PART	Q	Polarity=Neg	4	advmod	_	pronunciation=ne|Gos2.1_token_id=Gos178.tok2055
 4	vem	vedeti	VERB	Vmpr1s	Aspect=Imp|Mood=Ind|Number=Sing|Person=1|Tense=Pres|VerbForm=Fin	0	root	_	pronunciation=vem|Gos2.1_token_id=Gos178.tok2056
@@ -57459,7 +57459,7 @@
 # speaker_id = Cf-udel-02554
 # sound_url = https://nl.ijs.si/project/gos20/Gos181/Gos181.s470.mp3
 # text = a ne ?
-1	a	a	PART	Q	_	0	root	_	pronunciation=a|Gos2.1_token_id=Gos181.tok2435|Backchannel=Gos181.s469::1
+1	a	a	PART	Q	_	0	root	_	pronunciation=a|Gos2.1_token_id=Gos181.tok2435
 2	ne	ne	PART	Q	Polarity=Neg	1	fixed	_	pronunciation=ne|Gos2.1_token_id=Gos181.tok2436
 3	?	?	PUNCT	Z	_	1	punct	_	_
 
@@ -57654,7 +57654,7 @@
 # speaker_id = Bf-udel-02553
 # sound_url = https://nl.ijs.si/project/gos20/Gos181/Gos181.s486.mp3
 # text = ja , ne .
-1	ja	ja	PART	Q	_	3	discourse	_	pronunciation=ja|Gos2.1_token_id=Gos181.tok2523|Backchannel=Gos181.s485::1
+1	ja	ja	PART	Q	_	3	discourse	_	pronunciation=ja|Gos2.1_token_id=Gos181.tok2523
 2	,	,	PUNCT	Z	_	1	punct	_	_
 3	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=ne|Gos2.1_token_id=Gos181.tok2524
 4	.	.	PUNCT	Z	_	3	punct	_	_
@@ -57741,7 +57741,7 @@
 # speaker_id = Bf-prod-02264
 # sound_url = https://nl.ijs.si/project/gos20/Gos182/Gos182.s177.mp3
 # text = ne .
-1	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=ne|Gos2.1_token_id=Gos182.tok1556|Backchannel=Gos182.s176::3
+1	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=ne|Gos2.1_token_id=Gos182.tok1556
 2	.	.	PUNCT	Z	_	1	punct	_	_
 
 # sent_id = Gos182.s178
@@ -61363,7 +61363,7 @@
 # speaker_id = Bf-prod-02277
 # sound_url = https://nl.ijs.si/project/gos20/Gos190/Gos190.s157.mp3
 # text = ne , ne .
-1	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=ne|Gos2.1_token_id=Gos190.tok921|Backchannel=Gos190.s156::3
+1	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=ne|Gos2.1_token_id=Gos190.tok921
 2	,	,	PUNCT	Z	_	3	punct	_	_
 3	ne	ne	PART	Q	Polarity=Neg	1	discourse	_	pronunciation=ne|Gos2.1_token_id=Gos190.tok922
 4	.	.	PUNCT	Z	_	1	punct	_	_
@@ -61384,7 +61384,7 @@
 # speaker_id = Af-stra-02276
 # sound_url = https://nl.ijs.si/project/gos20/Gos190/Gos190.s159.mp3
 # text = ne , ne .
-1	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=ne|Gos2.1_token_id=Gos190.tok928|Backchannel=Gos190.s158::6
+1	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=ne|Gos2.1_token_id=Gos190.tok928
 2	,	,	PUNCT	Z	_	3	punct	_	_
 3	ne	ne	PART	Q	Polarity=Neg	1	discourse	_	pronunciation=ne|Gos2.1_token_id=Gos190.tok929
 4	.	.	PUNCT	Z	_	1	punct	_	_
@@ -61952,14 +61952,14 @@
 # speaker_id = Af-udel-02265
 # sound_url = https://nl.ijs.si/project/gos20/Gos194/Gos194.s577.mp3
 # text = ne .
-1	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=ne|Gos2.1_token_id=Gos194.tok3274|Backchannel=Gos194.s576::1
+1	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=ne|Gos2.1_token_id=Gos194.tok3274
 2	.	.	PUNCT	Z	_	1	punct	_	_
 
 # sent_id = Gos194.s578
 # speaker_id = Bf-udel-02266
 # sound_url = https://nl.ijs.si/project/gos20/Gos194/Gos194.s578.mp3
 # text = ne .
-1	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=ne|Gos2.1_token_id=Gos194.tok3275|Backchannel=Gos194.s577::1
+1	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=ne|Gos2.1_token_id=Gos194.tok3275
 2	.	.	PUNCT	Z	_	1	punct	_	_
 
 # sent_id = Gos194.s580
@@ -64418,7 +64418,7 @@
 # speaker_id = Am-prod-02274
 # sound_url = https://nl.ijs.si/project/gos20/Gos214/Gos214.s100.mp3
 # text = ne .
-1	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=ne|Gos2.1_token_id=Gos214.tok1355|Backchannel=Gos214.s99::1
+1	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=ne|Gos2.1_token_id=Gos214.tok1355
 2	.	.	PUNCT	Z	_	1	punct	_	_
 
 # sent_id = Gos214.s101
@@ -65113,7 +65113,7 @@
 # speaker_id = Df-soro-02107
 # sound_url = https://nl.ijs.si/project/gos20/Gos219/Gos219.s95.mp3
 # text = ne .
-1	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=ne|Gos2.1_token_id=Gos219.tok606|Backchannel=Gos219.s94::2
+1	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=ne|Gos2.1_token_id=Gos219.tok606
 2	.	.	PUNCT	Z	_	1	punct	_	_
 
 # sent_id = Gos219.s96
@@ -67702,7 +67702,7 @@
 # speaker_id = Hf-prij-02352
 # sound_url = https://nl.ijs.si/project/gos20/Gos225/Gos225.s343.mp3
 # text = ne .
-1	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=ne|Gos2.1_token_id=Gos225.tok2324|Backchannel=Gos225.s342::9
+1	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=ne|Gos2.1_token_id=Gos225.tok2324
 2	.	.	PUNCT	Z	_	1	punct	_	_
 
 # sent_id = Gos225.s344
@@ -69549,7 +69549,7 @@
 # speaker_id = Lf-otro-06567
 # sound_url = https://nl.ijs.si/project/gos20/Gos229/Gos229.s332.mp3
 # text = a ne ?
-1	a	a	ADV	Rgp	Degree=Pos	0	root	_	pronunciation=a|Gos2.1_token_id=Gos229.tok2865|Backchannel=Gos229.s331::4
+1	a	a	ADV	Rgp	Degree=Pos	0	root	_	pronunciation=a|Gos2.1_token_id=Gos229.tok2865
 2	ne	ne	PART	Q	Polarity=Neg	1	fixed	_	pronunciation=ne|Gos2.1_token_id=Gos229.tok2866
 3	?	?	PUNCT	Z	_	2	punct	_	_
 
@@ -71529,7 +71529,7 @@
 # speaker_id = Bm-star-03014
 # sound_url = https://nl.ijs.si/project/gos20/Gos233/Gos233.s407.mp3
 # text = ne , ne .
-1	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=ne|Gos2.1_token_id=Gos233.tok2184|Backchannel=Gos233.s406::1
+1	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=ne|Gos2.1_token_id=Gos233.tok2184
 2	,	,	PUNCT	Z	_	3	punct	_	_
 3	ne	ne	PART	Q	Polarity=Neg	1	discourse	_	pronunciation=ne|Gos2.1_token_id=Gos233.tok2185
 4	.	.	PUNCT	Z	_	1	punct	_	_
@@ -71715,7 +71715,7 @@
 # speaker_id = Df-star-03015
 # sound_url = https://nl.ijs.si/project/gos20/Gos233/Gos233.s421.mp3
 # text = ne .
-1	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=ne|Gos2.1_token_id=Gos233.tok2272|Backchannel=Gos233.s420::13
+1	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=ne|Gos2.1_token_id=Gos233.tok2272
 2	.	.	PUNCT	Z	_	1	punct	_	_
 
 # sent_id = Gos233.s422
@@ -71932,7 +71932,7 @@
 # speaker_id = Bm-star-03014
 # sound_url = https://nl.ijs.si/project/gos20/Gos233/Gos233.s443.mp3
 # text = no .
-1	no	no	PART	Q	_	0	root	_	pronunciation=no|Gos2.1_token_id=Gos233.tok2369|Backchannel=Gos233.s442::2
+1	no	no	PART	Q	_	0	root	_	pronunciation=no|Gos2.1_token_id=Gos233.tok2369
 2	.	.	PUNCT	Z	_	1	punct	_	_
 
 # sent_id = Gos233.s444
@@ -73646,7 +73646,7 @@
 # speaker_id = Mm-prij-09509
 # sound_url = https://nl.ijs.si/project/gos20/Gos242/Gos242.s46.mp3
 # text = no ja .
-1	no	no	PART	Q	_	0	root	_	pronunciation=no|Gos2.1_token_id=Gos242.tok455|Backchannel=Gos242.s45::7
+1	no	no	PART	Q	_	0	root	_	pronunciation=no|Gos2.1_token_id=Gos242.tok455
 2	ja	ja	PART	Q	_	1	discourse	_	pronunciation=ja|Gos2.1_token_id=Gos242.tok456
 3	.	.	PUNCT	Z	_	1	punct	_	_
 
@@ -76432,7 +76432,7 @@
 # speaker_id = If-prij-06008
 # sound_url = https://nl.ijs.si/project/gos20/Gos254/Gos254.s593.mp3
 # text = ne , ne .
-1	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=ne|Gos2.1_token_id=Gos254.tok3126|Backchannel=Gos254.s592::4
+1	ne	ne	PART	Q	Polarity=Neg	0	root	_	pronunciation=ne|Gos2.1_token_id=Gos254.tok3126
 2	,	,	PUNCT	Z	_	3	punct	_	_
 3	ne	ne	PART	Q	Polarity=Neg	1	discourse	_	pronunciation=nej|Gos2.1_token_id=Gos254.tok3127
 4	.	.	PUNCT	Z	_	1	punct	_	_
@@ -79305,7 +79305,7 @@
 # speaker_id = Am-prij-07167
 # sound_url = https://nl.ijs.si/project/gos20/Gos258/Gos258.s70.mp3
 # text = ej , res , ej .
-1	ej	ej	INTJ	I	_	3	discourse	_	pronunciation=ej|Gos2.1_token_id=Gos258.tok764|Backchannel=Gos258.s69::4
+1	ej	ej	INTJ	I	_	3	discourse	_	pronunciation=ej|Gos2.1_token_id=Gos258.tok764
 2	,	,	PUNCT	Z	_	1	punct	_	_
 3	res	res	ADV	Rgp	Degree=Pos	0	root	_	pronunciation=res|Gos2.1_token_id=Gos258.tok765
 4	,	,	PUNCT	Z	_	5	punct	_	_
