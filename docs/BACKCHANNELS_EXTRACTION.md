@@ -1,6 +1,6 @@
-# Backchannel Annotation for SST Corpus
+# Backchannels Extraction for SST Corpus
 
-This document describes the complete pipeline for identifying and annotating backchannels in the Slovenian SST corpus, following the task requirements and UniDive T1.5 guidelines.
+This document describes the backchannels extraction pipeline for the Slovenian SST corpus and the apply step used to write final annotations.
 
 ## 1. What are Backchannels?
 
@@ -18,7 +18,7 @@ This document describes the complete pipeline for identifying and annotating bac
 - Not answers to questions
 - Allow speaker A to continue
 
-## 2. Annotation Format
+## 2. Annotation Format (Applied in Final Step)
 
 Backchannels are annotated in CoNLL-U MISC column using:
 
@@ -97,7 +97,7 @@ File: `lexicon/sl_backchannels.txt`
 4. **has_verbal_bc:** B contains verbal forms (razumem, vem, veš, prosim)
 5. **not_all_in_lexicon:** Inverse of B_all_in_lexicon (convenience flag)
 
-### 4.3 Final Filter Criteria
+### 4.3 Final Filter Criteria (for Annotation Input)
 
 **Final backchannels = candidates where:**
 ```
@@ -175,7 +175,7 @@ Top words:
 
 Of the 386 annotated backchannels:
 - 253 (65.5%) have A_continues=1 (speaker continues after backchannel)
-- 133 (34.5%) have A_continues=0)
+- 133 (34.5%) have A_continues=0
 
 This confirms that while A continuing is good evidence, it's not required - the lexicon-based approach captures valid backchannels even when A doesn't continue immediately.
 
@@ -196,11 +196,3 @@ diff -u src/sst/sl_sst-ud-merged.conllu \
 ```
 
 Confirms only MISC column changed, no other modifications.
-
-## 8. Future Work
-
-- Manual validation of all 411 annotations
-- Analysis of false positives/negatives
-- Lexicon expansion based on corpus patterns
-- Integration with prosodic features (if available)
-- Cross-linguistic comparison with other UniDive corpora
