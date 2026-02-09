@@ -1,84 +1,36 @@
 #!/usr/bin/env python3
 """
-Extract first-pass coconstruction candidates from SST speaker-view CoNLL-U.
+Extract AB co-construction candidates from the SST corpus.
 
-Strategy (AB only, adjacent different speakers):
-1) Build A->B pairs where A and B are in the same document and speaker changes.
-2) Keep pairs where A shows incompleteness cues (strong: orphan near end, truncation;
-   weak: connector-like final token).
-3) Filter obvious non-coconstructions in B (very short backchannel-like turns, question-like turns).
-4) Rank candidates with a transparent score and export CSV for manual review.
+Hard filters (fixed, simple):
+  1. Consecutive A->B pair with speaker change in same document.
+  2. A has no final sentence punctuation (. ? ! …).
+  3. B is not already annotated as backchannel.
+  4. B is excluded if it contains only filler tokens.
+  5. B is excluded if its first content token is filler.
+
+Soft signals are exported as columns for manual filtering in Excel.
+No soft signal excludes a row automatically.
 """
 
 from __future__ import annotations
 
 import argparse
 import csv
-import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Set
 
 
-QUESTION_WORDS = {
-    "kaj",
-    "kako",
-    "kdo",
-    "kje",
-    "kdaj",
-    "zakaj",
-    "cemu",
-    "kam",
-    "odkod",
-    "ali",
-}
+SENT_END_PUNCT = {".", "?", "!", "…"}
+# Fillers often start noisy B turns but are not always in the lexicon.
+EXTRA_NOISY_STARTERS = {"eee", "eem", "hm", "hmm", "uh", "uhh"}
+FILLER_FORMS = {"e", "ee", "eee", "eem", "em", "emm", "hm", "hmm", "uh", "uhh"}
 
-# Minimal list for obvious short listener responses.
-BACKCHANNEL_LEXICON = {
-    "mhm",
-    "aha",
-    "aja",
-    "ja",
-    "ne",
-    "no",
-    "ok",
-    "okej",
-    "hm",
-    "mmm",
-    "eee",
-    "eem",
-    "ah",
-}
 
-# Weak incompleteness cue when used as final non-punctuation token in A.
-CONNECTOR_UPOS = {"ADP", "CCONJ", "SCONJ", "DET", "PRON"}
-CONNECTOR_FORMS = {
-    "pa",
-    "in",
-    "ali",
-    "da",
-    "ki",
-    "ko",
-    "ce",
-    "za",
-    "od",
-    "do",
-    "na",
-    "v",
-    "z",
-    "s",
-    "to",
-    "ta",
-    "tega",
-    "kateri",
-    "katero",
-    "nekaj",
-    "se",
-    "tudi",
-    "ampak",
-}
-
-CONTENT_UPOS = {"NOUN", "PROPN", "ADJ", "VERB", "NUM"}
+# ---------------------------------------------------------------------------
+# Data classes
+# ---------------------------------------------------------------------------
 
 
 @dataclass
@@ -93,30 +45,26 @@ class Token:
 
 
 @dataclass
-class Utterance:
+class Sent:
     doc: str
     sent_id: str
-    speaker_id: str
+    speaker: str
     text: str
+    sound_url: str
     tokens: List[Token]
 
-    @property
-    def nonpunct(self) -> List[Token]:
-        return [t for t in self.tokens if t.upos != "PUNCT"]
 
-    @property
-    def root(self) -> Optional[Token]:
-        for t in self.tokens:
-            if t.head == 0:
-                return t
-        return None
+# ---------------------------------------------------------------------------
+# Parsing
+# ---------------------------------------------------------------------------
 
 
-def parse_conllu(path: Path) -> List[Utterance]:
-    utterances: List[Utterance] = []
+def parse_conllu(path: Path) -> List[Sent]:
+    """Parse a CoNLL-U file into a list of Sent objects."""
+    sents: List[Sent] = []
     meta: Dict[str, str] = {}
     tokens: List[Token] = []
-    current_doc = ""
+    current_doc: str = ""
 
     def flush() -> None:
         nonlocal meta, tokens, current_doc
@@ -124,15 +72,13 @@ def parse_conllu(path: Path) -> List[Utterance]:
             return
         if "newdoc id" in meta:
             current_doc = meta["newdoc id"]
-        sent_id = meta.get("sent_id", "")
-        if not current_doc and ".s" in sent_id:
-            current_doc = sent_id.split(".s", 1)[0]
-        utterances.append(
-            Utterance(
+        sents.append(
+            Sent(
                 doc=current_doc,
-                sent_id=sent_id,
-                speaker_id=meta.get("speaker_id", ""),
+                sent_id=meta.get("sent_id", ""),
+                speaker=meta.get("speaker_id", ""),
                 text=meta.get("text", ""),
+                sound_url=meta.get("sound_url", "NA"),
                 tokens=tokens,
             )
         )
@@ -147,327 +93,348 @@ def parse_conllu(path: Path) -> List[Utterance]:
                 continue
             if line.startswith("#"):
                 if "=" in line:
-                    key, value = line[1:].split("=", 1)
-                    meta[key.strip()] = value.strip()
+                    k, v = line[1:].split("=", 1)
+                    meta[k.strip()] = v.strip()
                 continue
 
             cols = line.split("\t")
             if len(cols) < 8:
                 continue
-            tid = cols[0]
-            if "-" in tid or "." in tid:
+            tid_str = cols[0]
+            if "-" in tid_str or "." in tid_str:
                 continue
             try:
-                tid_int = int(tid)
+                tid_i = int(tid_str)
             except ValueError:
                 continue
 
-            head: Optional[int] = None
-            if cols[6].isdigit():
-                head = int(cols[6])
-
+            head = int(cols[6]) if cols[6].isdigit() else None
+            misc = cols[9] if len(cols) > 9 else "_"
             tokens.append(
                 Token(
-                    tid=tid_int,
+                    tid=tid_i,
                     form=cols[1],
                     lemma=cols[2],
                     upos=cols[3],
                     head=head,
                     deprel=cols[7],
-                    misc=cols[9] if len(cols) > 9 else "_",
+                    misc=misc,
                 )
             )
-
     flush()
-    return utterances
+    return sents
 
 
-def is_truncated(tok: Token) -> bool:
-    if tok.form.endswith("-"):
-        return True
-    # In SST this often appears in MISC pronunciation with either unicode ellipsis or "..."
-    return ("..." in tok.misc) or ("\u2026" in tok.misc)
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
 
-def normalize(s: str) -> str:
-    return s.strip().lower()
+def normalize_word(text: str) -> str:
+    """Lowercase token and trim surrounding punctuation."""
+    return text.strip().strip(".,?!;:\"'()[]{}").lower()
 
 
-def without_diacritics_sl(s: str) -> str:
-    # Lightweight normalization for cue lists.
-    return (
-        s.replace("č", "c")
-        .replace("š", "s")
-        .replace("ž", "z")
-        .replace("Č", "C")
-        .replace("Š", "S")
-        .replace("Ž", "Z")
-    )
+def content_tokens(sent: Sent) -> List[Token]:
+    """Return non-PUNCT tokens."""
+    return [t for t in sent.tokens if t.upos != "PUNCT"]
 
 
-def is_backchannel_like(utt: Utterance) -> bool:
-    toks = utt.nonpunct
-    if not toks or len(toks) > 3:
+def first_text_token(text: str) -> str:
+    """Return first normalized token from raw sentence text."""
+    for tok in text.split():
+        norm = normalize_word(tok)
+        if norm:
+            return norm
+    return ""
+
+
+def load_backchannel_lexicon(path: Path) -> Set[str]:
+    """Load `word|category` style lexicon, return only words."""
+    words: Set[str] = set()
+    if not path.exists():
+        print(f"Warning: Backchannel lexicon not found at {path}")
+        return words
+    with path.open("r", encoding="utf-8") as f:
+        for raw in f:
+            line = raw.strip()
+            if not line or line.startswith("#"):
+                continue
+            word = line.split("|", 1)[0].strip().lower()
+            if word:
+                words.add(word)
+    return words
+
+
+def load_annotated_backchannels(path: Path) -> Set[str]:
+    """Load sentence IDs already annotated as backchannels."""
+    backchannel_sent_ids: Set[str] = set()
+    if not path.exists():
+        print(f"Warning: Backchannel annotation file not found at {path}")
+        return backchannel_sent_ids
+
+    current_sent_id: Optional[str] = None
+    has_backchannel = False
+
+    with path.open("r", encoding="utf-8") as f:
+        for line in f:
+            line = line.rstrip("\n")
+            if line.startswith("# sent_id"):
+                if current_sent_id and has_backchannel:
+                    backchannel_sent_ids.add(current_sent_id)
+                current_sent_id = line.split("=", 1)[-1].strip()
+                has_backchannel = False
+            elif line == "":
+                if current_sent_id and has_backchannel:
+                    backchannel_sent_ids.add(current_sent_id)
+                current_sent_id = None
+                has_backchannel = False
+            elif not line.startswith("#") and "\t" in line:
+                cols = line.split("\t")
+                if len(cols) > 9 and "Backchannel=" in cols[9]:
+                    has_backchannel = True
+
+    if current_sent_id and has_backchannel:
+        backchannel_sent_ids.add(current_sent_id)
+
+    return backchannel_sent_ids
+
+
+def root_token(sent: Sent) -> Optional[Token]:
+    """Return root token in sentence."""
+    for tok in sent.tokens:
+        if tok.deprel == "root":
+            return tok
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Signal detectors
+# ---------------------------------------------------------------------------
+
+
+def sig_no_final_punct(a: Sent) -> bool:
+    """A is unfinished if last token is not sentence-ending punctuation."""
+    if not a.tokens:
         return False
-    forms = [normalize(t.form) for t in toks]
-    return all(f in BACKCHANNEL_LEXICON for f in forms)
+    return a.tokens[-1].form not in SENT_END_PUNCT
 
 
-def is_question_like(utt: Utterance) -> bool:
-    if "?" in utt.text:
-        return True
-    toks = utt.nonpunct
-    if not toks:
+def sig_orphan_tail(a: Sent) -> bool:
+    """A has an 'orphan' dependency among last 3 content tokens."""
+    ct = content_tokens(a)
+    if not ct:
         return False
-    first = normalize(toks[0].form)
-    return without_diacritics_sl(first) in QUESTION_WORDS
+    return any(tok.deprel == "orphan" for tok in ct[-3:])
 
 
-def a_incompleteness_flags(utt_a: Utterance) -> Dict[str, bool]:
-    toks = utt_a.tokens
-    nonp = utt_a.nonpunct
-    last_two = toks[-2:] if len(toks) >= 2 else toks
-
-    orphan_last2 = any(t.deprel == "orphan" for t in last_two)
-    truncation = any(is_truncated(t) for t in toks)
-
-    end_connector = False
-    if nonp:
-        end = nonp[-1]
-        end_form = without_diacritics_sl(normalize(end.form))
-        end_connector = (end.upos in CONNECTOR_UPOS) or (end_form in CONNECTOR_FORMS)
-
-    return {
-        "a_orphan_last2": orphan_last2,
-        "a_truncation": truncation,
-        "a_end_connector": end_connector,
-    }
+def is_filler_token(tok: Token) -> bool:
+    """Return True for filler-like tokens (incl. discourse:filler annotation)."""
+    form = normalize_word(tok.form)
+    return tok.deprel == "discourse:filler" or form in FILLER_FORMS
 
 
-def content_overlap(utt_a: Utterance, utt_b: Utterance) -> Tuple[bool, str]:
-    a_set = {
-        normalize(t.lemma if t.lemma != "_" else t.form)
-        for t in utt_a.nonpunct
-        if t.upos in CONTENT_UPOS
-    }
-    b_set = {
-        normalize(t.lemma if t.lemma != "_" else t.form)
-        for t in utt_b.nonpunct
-        if t.upos in CONTENT_UPOS
-    }
-    overlap = sorted(x for x in (a_set & b_set) if x)
-    return (len(overlap) > 0, "|".join(overlap[:6]))
-
-
-def score_candidate(
-    flags: Dict[str, bool],
-    b_len: int,
-    b_backchannel_like: bool,
-    b_question_like: bool,
-    has_overlap: bool,
-) -> Tuple[int, str]:
-    score = 0
-    if flags["a_orphan_last2"]:
-        score += 35
-    if flags["a_truncation"]:
-        score += 30
-    if flags["a_end_connector"]:
-        score += 12
-
-    if b_len <= 2:
-        score += 12
-    elif b_len <= 4:
-        score += 8
-    elif b_len <= 8:
-        score += 3
-    else:
-        score -= 10
-
-    if has_overlap:
-        score += 12
-    if b_backchannel_like:
-        score -= 35
-    if b_question_like:
-        score -= 25
-
-    score = max(0, min(100, score))
-    if score >= 60:
-        label = "HIGH"
-    elif score >= 40:
-        label = "MEDIUM"
-    else:
-        label = "LOW"
-    return score, label
-
-
-def build_ab_candidates(
-    utterances: Sequence[Utterance],
-    max_b_tokens: int,
-    include_question_like: bool,
-    include_backchannel_like: bool,
-) -> List[Dict[str, str]]:
-    rows: List[Dict[str, str]] = []
-
-    for i in range(1, len(utterances)):
-        a = utterances[i - 1]
-        b = utterances[i]
-        if not a.doc or a.doc != b.doc:
-            continue
-        if not a.speaker_id or not b.speaker_id:
-            continue
-        if a.speaker_id == b.speaker_id:
-            continue
-
-        flags = a_incompleteness_flags(a)
-        strong_or_weak = flags["a_orphan_last2"] or flags["a_truncation"] or flags["a_end_connector"]
-        if not strong_or_weak:
-            continue
-
-        b_len = len(b.nonpunct)
-        if b_len == 0 or b_len > max_b_tokens:
-            continue
-
-        b_bc_like = is_backchannel_like(b)
-        b_q_like = is_question_like(b)
-        if b_bc_like and not include_backchannel_like:
-            continue
-        if b_q_like and not include_question_like:
-            continue
-
-        overlap_yes, overlap_lemmas = content_overlap(a, b)
-        score, conf = score_candidate(flags, b_len, b_bc_like, b_q_like, overlap_yes)
-
-        a_root = a.root
-        proposed_attach = ""
-        if a_root is not None:
-            proposed_attach = f"{a.sent_id}::{a_root.tid}"
-
-        why = []
-        if flags["a_orphan_last2"]:
-            why.append("A orphan near end")
-        if flags["a_truncation"]:
-            why.append("A truncation marker")
-        if flags["a_end_connector"]:
-            why.append("A connector-like ending")
-        if overlap_yes:
-            why.append("A/B lexical overlap")
-
-        rows.append(
-            {
-                "doc": a.doc,
-                "confidence": conf,
-                "confidence_score": str(score),
-                "A_sent_id": a.sent_id,
-                "A_speaker": a.speaker_id,
-                "A_text": a.text,
-                "B_sent_id": b.sent_id,
-                "B_speaker": b.speaker_id,
-                "B_text": b.text,
-                "B_nonpunct_token_count": str(b_len),
-                "A_root_token_id": str(a_root.tid if a_root else ""),
-                "A_root_form": a_root.form if a_root else "",
-                "A_root_upos": a_root.upos if a_root else "",
-                "B_root_form": b.root.form if b.root else "",
-                "B_root_upos": b.root.upos if b.root else "",
-                "a_orphan_last2": str(flags["a_orphan_last2"]),
-                "a_truncation": str(flags["a_truncation"]),
-                "a_end_connector": str(flags["a_end_connector"]),
-                "b_backchannel_like": str(b_bc_like),
-                "b_question_like": str(b_q_like),
-                "a_b_lexical_overlap": str(overlap_yes),
-                "overlap_lemmas": overlap_lemmas,
-                "why_candidate": "; ".join(why),
-                "proposed_attach_A_root": proposed_attach,
-                "keep?": "",
-                "proposed_coconstruct_deprel": "",
-                "proposed_coconstruct_misc": "",
-            }
-        )
-
-    rows.sort(key=lambda r: int(r["confidence_score"]), reverse=True)
-    return rows
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Extract coconstruction candidates (AB adjacent turns).")
+    ap = argparse.ArgumentParser(
+        description="Extract AB co-construction candidates from SST corpus"
+    )
     ap.add_argument(
         "--input",
-        default="src/sst/sl_sst-ud-merged.conllu",
-        help="Input CoNLL-U (default: src/sst/sl_sst-ud-merged.conllu)",
+        default=None,
+        help="Path to merged .conllu (default: src/sst/sl_sst-ud-merged.conllu)",
     )
     ap.add_argument(
         "--output",
-        default="output/sst/coconstruction_candidates_ab.csv",
-        help="Output CSV path (default: output/sst/coconstruction_candidates_ab.csv)",
+        default=None,
+        help="Output CSV path (default: output/sst/coconstruction_candidates.csv)",
     )
     ap.add_argument(
-        "--max_b_tokens",
-        type=int,
-        default=8,
-        help="Max non-punctuation token count for B (default: 8)",
+        "--backchannels",
+        default=None,
+        help="Path to backchannel-annotated CoNLL-U (default: output/sst/sl_sst-ud-merged.backchannels.conllu)",
     )
     ap.add_argument(
-        "--include_question_like",
-        action="store_true",
-        help="Keep question-like B turns (default: excluded)",
-    )
-    ap.add_argument(
-        "--include_backchannel_like",
-        action="store_true",
-        help="Keep obvious short backchannel-like B turns (default: excluded)",
+        "--backchannel-lexicon",
+        default=None,
+        help="Path to backchannel lexicon (default: lexicon/sl_backchannels.txt)",
     )
     args = ap.parse_args()
 
-    input_path = Path(args.input)
-    output_path = Path(args.output)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+    script_dir = Path(__file__).parent
+    project_root = script_dir.parent
 
-    utterances = parse_conllu(input_path)
-    rows = build_ab_candidates(
-        utterances=utterances,
-        max_b_tokens=args.max_b_tokens,
-        include_question_like=args.include_question_like,
-        include_backchannel_like=args.include_backchannel_like,
+    if args.input is None:
+        args.input = str(project_root / "src" / "sst" / "sl_sst-ud-merged.conllu")
+    if args.output is None:
+        output_dir = project_root / "output" / "sst"
+        output_dir.mkdir(parents=True, exist_ok=True)
+        args.output = str(output_dir / "coconstruction_candidates.csv")
+
+    bc_path = (
+        Path(args.backchannels)
+        if args.backchannels
+        else project_root / "output" / "sst" / "sl_sst-ud-merged.backchannels.conllu"
     )
+    backchannel_sent_ids = load_annotated_backchannels(bc_path)
+    print(f"Loaded {len(backchannel_sent_ids)} annotated backchannels from {bc_path}")
 
+    lex_path = (
+        Path(args.backchannel_lexicon)
+        if args.backchannel_lexicon
+        else project_root / "lexicon" / "sl_backchannels.txt"
+    )
+    backchannel_lexicon = load_backchannel_lexicon(lex_path)
+    noisy_starters = backchannel_lexicon | EXTRA_NOISY_STARTERS
+    print(f"Loaded {len(backchannel_lexicon)} lexicon entries from {lex_path}")
+
+    path = Path(args.input)
+    sents = parse_conllu(path)
+    print(f"Parsed {len(sents)} sentences from {path}")
+
+    candidates: List[dict] = []
+
+    total_diff_pairs = 0
+    unfinished_pairs = 0
+    dropped_backchannel = 0
+    dropped_first_filler = 0
+    dropped_only_filler = 0
+
+    for i in range(len(sents) - 1):
+        a = sents[i]
+        b = sents[i + 1]
+
+        # Hard filter 1: AB in same doc with speaker change.
+        if a.doc != b.doc:
+            continue
+        if not a.speaker or not b.speaker:
+            continue
+        if a.speaker == b.speaker:
+            continue
+        total_diff_pairs += 1
+
+        # Hard filter 2: A must be unfinished by punctuation criterion.
+        if not sig_no_final_punct(a):
+            continue
+        unfinished_pairs += 1
+
+        # Hard filter 3: Exclude annotated backchannels.
+        if b.sent_id in backchannel_sent_ids:
+            dropped_backchannel += 1
+            continue
+
+        b_ct = content_tokens(b)
+        b_count = len(b_ct)
+        if not b_ct:
+            # Keep behavior explicit; with 0 content tokens we cannot check fillers.
+            continue
+
+        first_is_filler = is_filler_token(b_ct[0])
+        only_fillers = all(is_filler_token(tok) for tok in b_ct)
+
+        # Hard filter 4: B consists only of filler tokens.
+        if only_fillers:
+            dropped_only_filler += 1
+            continue
+
+        # Hard filter 5: B first content token is filler (e.g., eem/eee/e/hm).
+        if first_is_filler:
+            dropped_first_filler += 1
+            continue
+
+        ort = sig_orphan_tail(a)
+        a_continues = 0
+        if i + 2 < len(sents):
+            c = sents[i + 2]
+            if c.doc == a.doc and c.speaker == a.speaker:
+                a_continues = 1
+
+        b_root = root_token(b)
+        b_first_token = first_text_token(b.text)
+        b_has_question = "?" in b.text
+        b_starts_backchannel_like = b_first_token in noisy_starters
+        b_root_is_intj_part = int(bool(b_root and b_root.upos in {"INTJ", "PART"}))
+
+        candidates.append(
+            {
+                "doc": a.doc,
+                "a_sent_id": a.sent_id,
+                "a_speaker": a.speaker,
+                "a_text": a.text,
+                "a_sound_url": a.sound_url,
+                "b_sent_id": b.sent_id,
+                "b_speaker": b.speaker,
+                "b_text": b.text,
+                "b_sound_url": b.sound_url,
+                "len": b_count,
+                "b_root_upos": b_root.upos if b_root else "",
+                "b_root_form": b_root.form if b_root else "",
+                "orphan_tail": int(ort),
+                "a_continues": a_continues,
+                "a_is_question": int("?" in a.text),
+                "b_first_token": b_first_token,
+                "b_starts_backchannel_like": int(b_starts_backchannel_like),
+                "b_has_question_mark": int(b_has_question),
+                "b_root_is_intj_part": b_root_is_intj_part,
+                "is_coconstruction": "",
+                "coconstruct_deprel": "",
+                "governor_token_id": "",
+                "notes": "",
+            }
+        )
+
+    candidates.sort(key=lambda row: row["len"])
+
+    out = Path(args.output)
     fieldnames = [
         "doc",
-        "confidence",
-        "confidence_score",
-        "A_sent_id",
-        "A_speaker",
-        "A_text",
-        "B_sent_id",
-        "B_speaker",
-        "B_text",
-        "B_nonpunct_token_count",
-        "A_root_token_id",
-        "A_root_form",
-        "A_root_upos",
-        "B_root_form",
-        "B_root_upos",
-        "a_orphan_last2",
-        "a_truncation",
-        "a_end_connector",
-        "b_backchannel_like",
-        "b_question_like",
-        "a_b_lexical_overlap",
-        "overlap_lemmas",
-        "why_candidate",
-        "proposed_attach_A_root",
-        "keep?",
-        "proposed_coconstruct_deprel",
-        "proposed_coconstruct_misc",
+        "a_sent_id",
+        "a_speaker",
+        "a_text",
+        "a_sound_url",
+        "b_sent_id",
+        "b_speaker",
+        "b_text",
+        "b_sound_url",
+        "len",
+        "b_root_upos",
+        "b_root_form",
+        "orphan_tail",
+        "a_continues",
+        "a_is_question",
+        "b_first_token",
+        "b_starts_backchannel_like",
+        "b_has_question_mark",
+        "b_root_is_intj_part",
+        "is_coconstruction",
+        "coconstruct_deprel",
+        "governor_token_id",
+        "notes",
     ]
 
-    with output_path.open("w", encoding="utf-8", newline="") as f:
+    with out.open("w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
-        writer.writerows(rows)
+        for row in candidates:
+            writer.writerow(row)
 
-    print(f"Input utterances: {len(utterances)}")
-    print(f"Candidates written: {len(rows)}")
-    print(f"Output: {output_path}")
+    print(f"\nConsecutive AB pairs:                 {total_diff_pairs:4d}")
+    print(f"A unfinished (hard filter):           {unfinished_pairs:4d}")
+    print(f"Dropped due annotated backchannel:    {dropped_backchannel:4d}")
+    print(f"Dropped: B starts with filler:        {dropped_first_filler:4d}")
+    print(f"Dropped: B only filler tokens:        {dropped_only_filler:4d}")
+    print(f"Extracted candidates:                 {len(candidates):4d}")
+    print(f"  orphan_tail=1:                      {sum(1 for r in candidates if r['orphan_tail']):4d}")
+    print(f"  a_continues=1:                      {sum(1 for r in candidates if r['a_continues']):4d}")
+    print(f"  b_starts_backchannel_like=1:        {sum(1 for r in candidates if r['b_starts_backchannel_like']):4d}")
+    print(f"  b_has_question_mark=1:              {sum(1 for r in candidates if r['b_has_question_mark']):4d}")
+    print(f"  len <= 3:                           {sum(1 for r in candidates if r['len'] <= 3):4d}")
+    print(f"  len <= 7:                           {sum(1 for r in candidates if r['len'] <= 7):4d}")
+    print(f"\nWrote results to {out}")
 
 
 if __name__ == "__main__":
