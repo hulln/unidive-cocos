@@ -1,5 +1,8 @@
 # Docs Index
 
+- `EXTRACTION_WORKFLOW.md`  
+  One-page short extraction + apply + validation workflow.
+
 - `BACKCHANNELS_EXTRACTION.md`  
   Short practical guide: extraction, filtering, and apply step for backchannels.
 
