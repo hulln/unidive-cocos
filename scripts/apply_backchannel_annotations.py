@@ -73,7 +73,7 @@ def find_root_token_id(lines: List[str], sent_id: str) -> str:
 
 
 def load_backchannel_candidates(csv_path: Path) -> List[Dict]:
-    """Load CSV and filter to mentor's criteria.
+    """Load CSV and filter to task criteria.
     
     Returns list of candidates where A_is_question=0 AND B_all_in_lexicon=1
     """
@@ -82,7 +82,7 @@ def load_backchannel_candidates(csv_path: Path) -> List[Dict]:
     with open(csv_path, 'r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
-            # Apply mentor filter
+            # Apply task filter
             if row['A_is_question'] == '0' and row['B_all_in_lexicon'] == '1':
                 candidates.append(row)
     
