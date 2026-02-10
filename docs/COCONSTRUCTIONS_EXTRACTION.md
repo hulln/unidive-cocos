@@ -1,112 +1,85 @@
-# Coconstructions Extraction for SST Corpus
+# Coconstructions in SST: Practical Workflow
 
-This document describes exactly what the current AB extraction script does and what output it produces.
+Short guide for the coconstruction workflow in this repository: extract candidates, annotate manually, apply, and validate.
 
-## 1. What are Co-constructions?
+## 1. Annotation format
 
-**Co-constructions** are syntactic relations that hold across utterances when:
-- speaker B continues/completes what speaker A started, or
-- the same speaker continues after interruption (not included in this current AB-only run).
+Coconstruction is written in token `MISC` as:
 
-For the current extraction, we focus only on **AB pairs**:
-- consecutive A->B speaker change,
-- same document,
-- no subtype split (A.1/A.2/A.3/B not separated at extraction time).
-
-## 2. Extraction Pipeline (AB)
-
-### 2.1 Hard Filters (Must Pass All)
-
-1. **Speaker change pair:** consecutive A->B pair with different speakers, same document  
-2. **A unfinished by punctuation:** A does not end with `. ? ! …`  
-3. **B not pre-annotated backchannel:** B has no existing `Backchannel=` annotation  
-4. **B not filler-only:** B is not composed entirely of filler tokens  
-5. **B not filler-start:** first content token of B is not filler
-
-Filler detection uses:
-- `deprel=discourse:filler`, and
-- fallback forms: `e, ee, eee, eem, em, emm, hm, hmm, uh, uhh`
-
-### 2.2 Soft Signals (Exported, Not Hard Filters)
-
-- `len`: number of non-punctuation tokens in B
-- `orphan_tail`: A has `orphan` in its last 3 content tokens
-- `a_continues`: speaker A continues immediately after B
-- `a_is_question`
-- `b_first_token`
-- `b_starts_backchannel_like`
-- `b_has_question_mark`
-- `b_root_is_intj_part`
-
-These are prioritization hints for manual review only.
-
-## 3. Script and Output
-
-**Script:** `scripts/extract_coconstruction_candidates.py`
-
-```bash
-python3 scripts/extract_coconstruction_candidates.py \
-  --output output/sst/coconstruction_candidates.csv
+```text
+Coconstruct=<deprel>::<a_sent_id>::<governor_token_id>
 ```
 
-**Inputs:**
-- `src/sst/sl_sst-ud-merged.conllu`
-- `output/sst/sl_sst-ud-merged.backchannels.conllu`
-- `lexicon/sl_backchannels.txt`
+Where:
+- `<deprel>` = UD relation from B-root to a governor token in A,
+- `<a_sent_id>` = sentence ID of A,
+- `<governor_token_id>` = token ID in A that governs B-root.
 
-**Output:**
+In this pipeline, the feature is written on the **root token of sentence B**.
+
+## 2. Candidate extraction (Step 04)
+
+```bash
+python3 scripts/04_extract_coconstruction_candidates.py
+```
+
+This runs `scripts/extract_coconstruction_candidates.py`.
+
+Main output:
 - `output/sst/coconstruction_candidates.csv`
 
-Auto-review split files that were generated:
-- `output/sst/coconstruction_candidates_auto_balanced.csv`
-- `output/sst/coconstruction_candidates_auto_balanced_clean.csv`
-- `output/sst/coconstruction_candidates_auto_strict.csv`
-- `output/sst/coconstruction_candidates_review_later.csv`
+Hard filters used by the extractor:
+1. consecutive A->B pair, different speakers, same document,
+2. A does not end with sentence-final punctuation (`. ? ! …`),
+3. B is not already annotated as backchannel,
+4. B is not filler-only,
+5. B does not start with filler content.
 
-These are convenience subsets; the base extraction list is `coconstruction_candidates.csv`.
+## 3. Manual annotation process
 
-Manual annotation fields included in CSV:
-- `is_coconstruction`
-- `coconstruct_deprel`
-- `governor_token_id`
-- `notes`
+Manual annotation is required before applying coconstructions.
 
-## 4. Current Statistics
+Required columns for apply:
+- `a_sent_id`, `b_sent_id`, `coconstruct_deprel`, `governor_token_id`
+- optional: `is_coconstruction` (YES values: `1`, `yes`, `y`, `true`)
 
-Hard-filter counts:
+### How to fill rows
 
-1. AB speaker-change pairs: **2690**
-2. A unfinished (no final punct): **159**
-3. Remove pre-annotated backchannels: **-19** (remaining 140)
-4. Remove filler-start / filler-only B: **-8**
+1. Review A and B together.
+2. Decide if B is a coconstruction of A.
+3. If NO: leave relation/governor empty (and set `is_coconstruction=0` if used).
+4. If YES: find B root token, choose one governor token in A, set `governor_token_id`, then set `coconstruct_deprel`.
+5. Add `notes` if the case is uncertain.
 
-Final extracted candidates: **132**
+Practical rule:
+- imagine A and B merged into one dependency tree,
+- then attach B-root to one token in A with the relation that best fits that merged tree.
 
-Distribution in final 132:
-- `len <= 3`: 43
-- `len 4-7`: 39
-- `len 8-10`: 16
-- `len >= 11`: 34
-- `orphan_tail=1`: 25
-- `a_continues=1`: 70
-- `b_starts_backchannel_like=1`: 38
-- `b_has_question_mark=1`: 14
+Final manual file used in this repo:
+- `output/sst/final_bc_coco/annotations/coconstruction_17_final.xlsx`
 
-## 5. Quality Assurance
+## 4. Apply coconstructions (Step 05)
 
-Verification checks performed:
-- Script compiles cleanly (`python3 -m py_compile`)
-- Output row count is reproducible (132 with current corpus/backchannel file)
-- Hard-filter invariants verified on extracted rows:
-  - no row where A has final sentence punctuation
-  - no row where B is pre-annotated backchannel
-  - no row with filler-start/filler-only B
-- No duplicate `b_sent_id` in extracted CSV
+```bash
+python3 scripts/05_apply_coconstruction_annotations.py \
+  --annotations output/sst/final_bc_coco/annotations/coconstruction_17_final.xlsx \
+  --input output/sst/sl_sst-ud-merged.backchannels.conllu \
+  --output output/sst/final_bc_coco/conllu/sl_sst-ud-merged.conllu
+```
 
-## 6. Practical Annotation Guidance
+The script checks that A/B IDs exist, governor token exists in A, and B has one root.
 
-Recommended first-pass order:
-1. Sort by `len` ascending
-2. Prioritize `a_continues=1`
-3. Use `orphan_tail=1` as secondary cue
-4. Fill `is_coconstruction`, then `coconstruct_deprel` and `governor_token_id` for YES cases
+## 5. Split and final checks
+
+```bash
+python3 scripts/06_split_final_corpus.py
+python3 scripts/07_diffcheck_final_vs_src.py
+```
+
+After step 07, sentence IDs/order stay identical to `src/sst`, and only token `MISC` changes are allowed.
+
+## 6. Current run numbers (verified)
+
+- extracted coconstruction candidates: `132`
+- YES coconstructions in final manual sheet: `17`
+- final merged diff vs source: `403` MISC-only lines (`386` backchannels + `17` coconstructions)
