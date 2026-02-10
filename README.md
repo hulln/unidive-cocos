@@ -18,8 +18,6 @@ Pipeline for adding `Backchannel=` and `Coconstruct=` annotations to SST speaker
 - `output/sst/`
   - extracted candidates and generated annotated corpora
   - final package: `output/sst/final_bc_coco/`
-- `webapp/`
-  - local UI for annotation/review support
 
 ## End-to-end workflow
 
