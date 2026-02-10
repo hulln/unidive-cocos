@@ -1,10 +1,10 @@
 # Docs Index
 
 - `BACKCHANNELS_EXTRACTION.md`  
-  Backchannels extraction pipeline + annotation apply step.
+  Short practical guide: extraction, filtering, and apply step for backchannels.
 
 - `COCONSTRUCTIONS_EXTRACTION.md`  
-  AB coconstructions candidate extraction pipeline.
+  Short practical guide: extraction, manual annotation, and apply workflow for coconstructions.
 
 - `coconstructions-details.md`  
   Detailed coconstruction specification.

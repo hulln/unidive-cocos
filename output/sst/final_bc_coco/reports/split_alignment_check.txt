@@ -1,0 +1,28 @@
+Overall status: PASS
+[train]
+- src/new line counts: 102711/102711
+- sentence count src/new: 5094/5094
+- sent_id sequence identical: True
+- total diff lines: 349
+- misc-only token changes: 349
+- unexpected changes: 0
+- status: PASS
+
+[dev]
+- src/new line counts: 13005/13005
+- sentence count src/new: 595/595
+- sent_id sequence identical: True
+- total diff lines: 44
+- misc-only token changes: 44
+- unexpected changes: 0
+- status: PASS
+
+[test]
+- src/new line counts: 13626/13626
+- sentence count src/new: 432/432
+- sent_id sequence identical: True
+- total diff lines: 10
+- misc-only token changes: 10
+- unexpected changes: 0
+- status: PASS
+
