@@ -12,6 +12,7 @@ This package contains final speaker-view CoNLL-U files with both:
 - `annotations/coconstruction_17_final.xlsx`
 - `reports/diffcheck_src_vs_final.txt`
 - `reports/split_alignment_check.txt`
+- `reports/coco_deprel_review.xlsx`
 
 ## Process summary (what was done)
 1. Merged split corpus (`src/sst/*` -> merged).
