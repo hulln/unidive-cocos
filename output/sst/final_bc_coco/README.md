@@ -10,7 +10,7 @@ This package contains final speaker-view CoNLL-U files with both:
 - `conllu/sl_sst-ud-dev.conllu`
 - `conllu/sl_sst-ud-test.conllu`
 - `annotations/coconstruction_17_final.xlsx`
-- `reports/diffcheck_src_vs_final.txt`
+- `reports/coco_new_deprels.txt`
 - `reports/split_alignment_check.txt`
 - `reports/coco_deprel_review.xlsx`
 
