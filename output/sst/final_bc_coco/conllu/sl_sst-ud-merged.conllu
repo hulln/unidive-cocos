@@ -530,8 +530,8 @@
 43	njo	on	PRON	Pp3fsi	Case=Ins|Gender=Fem|Number=Sing|Person=3|PronType=Prs	45	obl	_	pronunciation=njo|Gos2.1_token_id=Gos051.tok2238
 44	nekoč	nekoč	ADV	Rgp	Degree=Pos	45	advmod	_	pronunciation=nekoč|Gos2.1_token_id=Gos051.tok2239
 45	doživel	doživeti	VERB	Vmep-sm	Aspect=Perf|Gender=Masc|Number=Sing|VerbForm=Part	15	parataxis	_	pronunciation=doživel|Gos2.1_token_id=Gos051.tok2240
-46	neko	nek	DET	Pi-nsa	Case=Acc|Gender=Neut|Number=Sing|PronType=Ind	47	det	_	pronunciation=neko|Gos2.1_token_id=Gos051.tok2241
-47	prijetno	prijeten	ADJ	Agpnsa	Case=Acc|Degree=Pos|Gender=Neut|Number=Sing	45	obj	_	pronunciation=prijetno|Gos2.1_token_id=Gos051.tok2242
+46	neko	nek	DET	Pi-nsa	Case=Acc|Gender=Neut|Number=Sing|PronType=Ind	47	det	_	pronunciation=neko|Gos2.1_token_id=Gos051.tok2241|Coconstruct=det::Gos051.s262::1
+47	prijetno	prijeten	ADJ	Agpnsa	Case=Acc|Degree=Pos|Gender=Neut|Number=Sing	45	obj	_	pronunciation=prijetno|Gos2.1_token_id=Gos051.tok2242|Coconstruct=amod::Gos051.s262::1
 
 # sent_id = Gos051.s262
 # speaker_id = Pn-vsiucenci-10000
@@ -5917,7 +5917,7 @@
 # text = na par forumov
 1	na	na	ADP	Sa	Case=Acc	3	case	_	pronunciation=na|Gos2.1_token_id=Gos243.tok604
 2	par	par	DET	Rgp	PronType=Ind	3	advmod	_	pronunciation=par|Gos2.1_token_id=Gos243.tok605
-3	forumov	forum	NOUN	Ncmpg	Case=Gen|Gender=Masc|Number=Plur	0	root	_	pronunciation=forumov|Gos2.1_token_id=Gos243.tok606
+3	forumov	forum	NOUN	Ncmpg	Case=Gen|Gender=Masc|Number=Plur	0	root	_	pronunciation=forumov|Gos2.1_token_id=Gos243.tok606|Coconstruct=reparandum::Gos243.s100::3
 
 # sent_id = Gos243.s100
 # speaker_id = Am-prij-09505
@@ -28258,13 +28258,13 @@
 15	,	,	PUNCT	Z	_	14	punct	_	_
 16	sem	biti	AUX	Va-r1s-n	Mood=Ind|Number=Sing|Person=1|Polarity=Pos|Tense=Pres|VerbForm=Fin	17	aux	_	pronunciation=sem|Gos2.1_token_id=Gos009.tok1782
 17	srečala	srečati	VERB	Vmep-sf	Aspect=Perf|Gender=Fem|Number=Sing|VerbForm=Part	3	parataxis	_	pronunciation=srečala|Gos2.1_token_id=Gos009.tok1783
-18	moj	moj	DET	Ps1msns	Case=Nom|Gender=Masc|Number=Sing|Number[psor]=Sing|Person=1|Poss=Yes|PronType=Prs	24	reparandum	_	pronunciation=moj|Gos2.1_token_id=Gos009.tok1784
+18	moj	moj	DET	Ps1msns	Case=Nom|Gender=Masc|Number=Sing|Number[psor]=Sing|Person=1|Poss=Yes|PronType=Prs	24	reparandum	_	pronunciation=moj|Gos2.1_token_id=Gos009.tok1784|Coconstruct=reparandum::Gos009.s227::4
 19	z-	z-	X	Xt	_	24	reparandum	_	pronunciation=z…|Gos2.1_token_id=Gos009.tok1785
 20	zdaj-	zdaj-	X	Xt	_	24	reparandum	_	pronunciation=zdaj…|Gos2.1_token_id=Gos009.tok1786
 21	,	,	PUNCT	Z	_	22	punct	_	_
 22	eee	eee	INTJ	I	_	17	discourse:filler	_	pronunciation=eee|Gos2.1_token_id=Gos009.tok1787
 23	,	,	PUNCT	Z	_	22	punct	_	_
-24	moj	moj	DET	Ps1msns	Case=Nom|Gender=Masc|Number=Sing|Number[psor]=Sing|Person=1|Poss=Yes|PronType=Prs	17	obj	_	pronunciation=moj|Gos2.1_token_id=Gos009.tok1788
+24	moj	moj	DET	Ps1msns	Case=Nom|Gender=Masc|Number=Sing|Number[psor]=Sing|Person=1|Poss=Yes|PronType=Prs	17	obj	_	pronunciation=moj|Gos2.1_token_id=Gos009.tok1788|Coconstruct=reparandum::Gos009.s227::4
 
 # sent_id = Gos009.s227
 # speaker_id = Af-prof-06578
@@ -30188,10 +30188,10 @@
 7	vedno	vedno	ADV	Rgp	Degree=Pos	5	advmod	_	pronunciation=vedno|Gos2.1_token_id=Gos017.tok1896
 8	,	,	PUNCT	Z	_	12	punct	_	_
 9	samo	samo	PART	Q	_	12	cc	_	pronunciation=sam|Gos2.1_token_id=Gos017.tok1897
-10	pol	pol	DET	Rgp	Degree=Pos	12	advmod	_	pronunciation=po|Gos2.1_token_id=Gos017.tok1898
+10	pol	pol	DET	Rgp	Degree=Pos	12	advmod	_	pronunciation=po|Gos2.1_token_id=Gos017.tok1898|Coconstruct=advmod::Gos017.s285::3
 11	je	biti	AUX	Va-r3s-n	Mood=Ind|Number=Sing|Person=3|Polarity=Pos|Tense=Pres|VerbForm=Fin	12	aux	_	pronunciation=je|Gos2.1_token_id=Gos017.tok1899
-12	bilo	biti	VERB	Va-p-sn	Gender=Neut|Number=Sing|VerbForm=Part	5	conj	_	pronunciation=blo|Gos2.1_token_id=Gos017.tok1900
-13	pač	pač	PART	Q	_	12	advmod	_	pronunciation=pač|Gos2.1_token_id=Gos017.tok1901
+12	bilo	biti	VERB	Va-p-sn	Gender=Neut|Number=Sing|VerbForm=Part	5	conj	_	pronunciation=blo|Gos2.1_token_id=Gos017.tok1900|Coconstruct=cop::Gos017.s285::3
+13	pač	pač	PART	Q	_	12	advmod	_	pronunciation=pač|Gos2.1_token_id=Gos017.tok1901|Coconstruct=advmod::Gos017.s285::3
 
 # sent_id = Gos017.s285
 # speaker_id = Af-prof-07104
@@ -30778,16 +30778,16 @@
 10	moder	moder	ADJ	Agpmsnn	Case=Nom|Definite=Ind|Degree=Pos|Gender=Masc|Number=Sing	4	parataxis	_	pronunciation=moder|Gos2.1_token_id=Gos021.tok867
 11	,	,	PUNCT	Z	_	15	punct	_	_
 12	ostala	ostal	ADJ	Appfsn	Case=Nom|Degree=Pos|Gender=Fem|Number=Sing|VerbForm=Part	13	amod	_	pronunciation=ostala|Gos2.1_token_id=Gos021.tok868
-13	polovica	polovica	NOUN	Ncfsn	Case=Nom|Gender=Fem|Number=Sing	15	nsubj	_	pronunciation=polovica|Gos2.1_token_id=Gos021.tok869
-14	pa	pa	CCONJ	Cc	_	15	advmod	_	pronunciation=pa|Gos2.1_token_id=Gos021.tok870
-15	je	biti	VERB	Va-r3s-n	Mood=Ind|Number=Sing|Person=3|Polarity=Pos|Tense=Pres|VerbForm=Fin	10	parataxis	_	pronunciation=je|Gos2.1_token_id=Gos021.tok871
-16	že	že	PART	Q	_	15	advmod	_	pronunciation=že|Gos2.1_token_id=Gos021.tok872
+13	polovica	polovica	NOUN	Ncfsn	Case=Nom|Gender=Fem|Number=Sing	15	nsubj	_	pronunciation=polovica|Gos2.1_token_id=Gos021.tok869|Coconstruct=nsubj::Gos021.s150::1
+14	pa	pa	CCONJ	Cc	_	15	advmod	_	pronunciation=pa|Gos2.1_token_id=Gos021.tok870|Coconstruct=advmod::Gos021.s150::1
+15	je	biti	VERB	Va-r3s-n	Mood=Ind|Number=Sing|Person=3|Polarity=Pos|Tense=Pres|VerbForm=Fin	10	parataxis	_	pronunciation=je|Gos2.1_token_id=Gos021.tok871|Coconstruct=cop::Gos021.s150::1
+16	že	že	PART	Q	_	15	advmod	_	pronunciation=že|Gos2.1_token_id=Gos021.tok872|Coconstruct=advmod::Gos021.s150::1
 
 # sent_id = Gos021.s150
 # speaker_id = Pn-vsiucenci-10000
 # sound_url = https://nl.ijs.si/project/gos20/Gos021/Gos021.s150.mp3
 # text = rdeča .
-1	rdeča	rdeč	ADJ	Agpfsn	Case=Nom|Degree=Pos|Gender=Fem|Number=Sing	0	root	_	pronunciation=rdeča|Gos2.1_token_id=Gos021.tok873|Coconstruct=parataxis::Gos021.s149::15
+1	rdeča	rdeč	ADJ	Agpfsn	Case=Nom|Degree=Pos|Gender=Fem|Number=Sing	0	root	_	pronunciation=rdeča|Gos2.1_token_id=Gos021.tok873|Coconstruct=parataxis::Gos021.s149::4
 2	.	.	PUNCT	Z	_	1	punct	_	_
 
 # sent_id = Gos021.s151
@@ -61484,7 +61484,7 @@
 19	saj	saj	CCONJ	Cc	_	20	cc	_	pronunciation=se|Gos2.1_token_id=Gos190.tok977
 20	veš	vedeti	VERB	Vmpr2s	Aspect=Imp|Mood=Ind|Number=Sing|Person=2|Tense=Pres|VerbForm=Fin	15	parataxis	_	pronunciation=veš|Gos2.1_token_id=Gos190.tok978
 21	,	,	PUNCT	Z	_	22	punct	_	_
-22	že	že	PART	Q	_	20	advmod	_	pronunciation=že|Gos2.1_token_id=Gos190.tok979
+22	že	že	PART	Q	_	20	advmod	_	pronunciation=že|Gos2.1_token_id=Gos190.tok979|Coconstruct=advmod::Gos190.s167::2
 
 # sent_id = Gos190.s167
 # speaker_id = Af-stra-02276
@@ -71038,7 +71038,7 @@
 6	je	biti	AUX	Va-r3s-n	Mood=Ind|Number=Sing|Person=3|Polarity=Pos|Tense=Pres|VerbForm=Fin	7	cop	_	pronunciation=je|Gos2.1_token_id=Gos233.tok1973
 7	kriza	kriza	NOUN	Ncfsn	Case=Nom|Gender=Fem|Number=Sing	0	root	_	pronunciation=kriza|Gos2.1_token_id=Gos233.tok1974
 8	,	,	PUNCT	Z	_	9	punct	_	_
-9	ker	ker	SCONJ	Cs	_	7	advcl	_	pronunciation=k|Gos2.1_token_id=Gos233.tok1975
+9	ker	ker	SCONJ	Cs	_	7	advcl	_	pronunciation=k|Gos2.1_token_id=Gos233.tok1975|Coconstruct=mark::Gos233.s366::2
 
 # sent_id = Gos233.s366
 # speaker_id = Bm-star-03014
@@ -71278,9 +71278,9 @@
 # speaker_id = Tm-otro-03016
 # sound_url = https://nl.ijs.si/project/gos20/Gos233/Gos233.s388.mp3
 # text = ja , pa
-1	ja	ja	PART	Q	_	3	discourse	_	pronunciation=ja|Gos2.1_token_id=Gos233.tok2068
+1	ja	ja	PART	Q	_	3	discourse	_	pronunciation=ja|Gos2.1_token_id=Gos233.tok2068|Coconstruct=discourse::Gos233.s389::1
 2	,	,	PUNCT	Z	_	1	punct	_	_
-3	pa	pa	CCONJ	Cc	_	0	root	_	pronunciation=pa|Gos2.1_token_id=Gos233.tok2069
+3	pa	pa	CCONJ	Cc	_	0	root	_	pronunciation=pa|Gos2.1_token_id=Gos233.tok2069|Coconstruct=advmod::Gos233.s389::1
 
 # sent_id = Gos233.s389
 # speaker_id = Bm-star-03014
@@ -71627,19 +71627,19 @@
 5	,	,	PUNCT	Z	_	6	punct	_	_
 6	da	da	SCONJ	Cs	_	8	reparandum	_	pronunciation=da|Gos2.1_token_id=Gos233.tok2222
 7	,	,	PUNCT	Z	_	8	punct	_	_
-8	da	da	SCONJ	Cs	_	14	mark	_	pronunciation=da|Gos2.1_token_id=Gos233.tok2223
+8	da	da	SCONJ	Cs	_	14	mark	_	pronunciation=da|Gos2.1_token_id=Gos233.tok2223|Coconstruct=mark::Gos233.s417::1
 9	,	,	PUNCT	Z	_	14	punct	_	_
-10	kdor	kdor	PRON	Pr-msn	Case=Nom|Gender=Masc|Number=Sing|PronType=Rel	14	nsubj	_	pronunciation=kdor|Gos2.1_token_id=Gos233.tok2224
+10	kdor	kdor	PRON	Pr-msn	Case=Nom|Gender=Masc|Number=Sing|PronType=Rel	14	nsubj	_	pronunciation=kdor|Gos2.1_token_id=Gos233.tok2224|Coconstruct=nsubj::Gos233.s417::1
 11	ti	ti	PRON	Pp2-sd--y	Case=Dat|Number=Sing|Person=2|PronType=Prs|Variant=Short	14	iobj	_	pronunciation=ti|Gos2.1_token_id=Gos233.tok2225
 12	bo	biti	AUX	Va-f3s-n	Mood=Ind|Number=Sing|Person=3|Polarity=Pos|Tense=Fut|VerbForm=Fin	14	aux	_	pronunciation=bo|Gos2.1_token_id=Gos233.tok2226
 13	reklamo	reklama	NOUN	Ncfsa	Case=Acc|Gender=Fem|Number=Sing	14	obj	_	pronunciation=reklamo|Gos2.1_token_id=Gos233.tok2227
-14	poslal	poslati	VERB	Vmep-sm	Aspect=Perf|Gender=Masc|Number=Sing|VerbForm=Part	2	ccomp	_	pronunciation=poslal|Gos2.1_token_id=Gos233.tok2228
+14	poslal	poslati	VERB	Vmep-sm	Aspect=Perf|Gender=Masc|Number=Sing|VerbForm=Part	2	ccomp	_	pronunciation=poslal|Gos2.1_token_id=Gos233.tok2228|Coconstruct=advcl::Gos233.s417::1
 
 # sent_id = Gos233.s417
 # speaker_id = Bm-star-03014
 # sound_url = https://nl.ijs.si/project/gos20/Gos233/Gos233.s417.mp3
 # text = zaračuna .
-1	zaračuna	zaračunati	VERB	Vmer3s	Aspect=Perf|Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin	0	root	_	pronunciation=zaračuna|Gos2.1_token_id=Gos233.tok2229|Coconstruct=parataxis::Gos233.s415::14
+1	zaračuna	zaračunati	VERB	Vmer3s	Aspect=Perf|Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin	0	root	_	pronunciation=zaračuna|Gos2.1_token_id=Gos233.tok2229|Coconstruct=ccomp::Gos233.s415::2
 2	.	.	PUNCT	Z	_	1	punct	_	_
 
 # sent_id = Gos233.s418
@@ -74637,10 +74637,10 @@
 # speaker_id = Am-soro-07522
 # sound_url = https://nl.ijs.si/project/gos20/Gos246/Gos246.s352.mp3
 # text = in da še vedno
-1	in	in	CCONJ	Cc	_	4	cc	_	pronunciation=in|Gos2.1_token_id=Gos246.tok3671
-2	da	da	SCONJ	Cs	_	4	mark	_	pronunciation=da|Gos2.1_token_id=Gos246.tok3672
-3	še	še	PART	Q	_	4	orphan	_	pronunciation=še|Gos2.1_token_id=Gos246.tok3673
-4	vedno	vedno	ADV	Rgp	Degree=Pos	0	root	_	pronunciation=vedno|Gos2.1_token_id=Gos246.tok3674
+1	in	in	CCONJ	Cc	_	4	cc	_	pronunciation=in|Gos2.1_token_id=Gos246.tok3671|Coconstruct=cc::Gos246.s353::3
+2	da	da	SCONJ	Cs	_	4	mark	_	pronunciation=da|Gos2.1_token_id=Gos246.tok3672|Coconstruct=mark::Gos246.s353::3
+3	še	še	PART	Q	_	4	orphan	_	pronunciation=še|Gos2.1_token_id=Gos246.tok3673|Coconstruct=advmod::Gos246.s353::3
+4	vedno	vedno	ADV	Rgp	Degree=Pos	0	root	_	pronunciation=vedno|Gos2.1_token_id=Gos246.tok3674|Coconstruct=advmod::Gos246.s353::3
 
 # sent_id = Gos246.s353
 # speaker_id = Mm-star-07523
@@ -76721,8 +76721,8 @@
 # text = podpišeš , potem pa
 1	podpišeš	podpisati	VERB	Vmer2s	Aspect=Perf|Mood=Ind|Number=Sing|Person=2|Tense=Pres|VerbForm=Fin	0	root	_	pronunciation=podpišeš|Gos2.1_token_id=Gos254.tok3266
 2	,	,	PUNCT	Z	_	3	punct	_	_
-3	potem	potem	ADV	Rgp	Degree=Pos	1	parataxis	_	pronunciation=te|Gos2.1_token_id=Gos254.tok3267
-4	pa	pa	CCONJ	Cc	_	3	orphan	_	pronunciation=pa|Gos2.1_token_id=Gos254.tok3268
+3	potem	potem	ADV	Rgp	Degree=Pos	1	parataxis	_	pronunciation=te|Gos2.1_token_id=Gos254.tok3267|Coconstruct=reparandum::Gos254.s616::1
+4	pa	pa	CCONJ	Cc	_	3	orphan	_	pronunciation=pa|Gos2.1_token_id=Gos254.tok3268|Coconstruct=reparandum::Gos254.s616::2
 
 # sent_id = Gos254.s616
 # speaker_id = Mm-prij-06007

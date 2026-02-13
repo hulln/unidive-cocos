@@ -5,10 +5,10 @@ Overall status: PASS
 - line counts src/out: 129342/129342
 - sentence counts src/out: 6121/6121
 - sent_id sequence identical: True
-- total diff lines: 403
-- misc-only changes: 403
+- total diff lines: 428
+- misc-only changes: 428
 - added Backchannel lines: 386
-- added Coconstruct lines: 17
+- added Coconstruct lines: 42
 - unexpected changes: 0
 - status: PASS
 
@@ -18,10 +18,10 @@ Overall status: PASS
 - line counts src/out: 102711/102711
 - sentence counts src/out: 5094/5094
 - sent_id sequence identical: True
-- total diff lines: 349
-- misc-only changes: 349
+- total diff lines: 371
+- misc-only changes: 371
 - added Backchannel lines: 335
-- added Coconstruct lines: 14
+- added Coconstruct lines: 36
 - unexpected changes: 0
 - status: PASS
 
@@ -31,10 +31,10 @@ Overall status: PASS
 - line counts src/out: 13005/13005
 - sentence counts src/out: 595/595
 - sent_id sequence identical: True
-- total diff lines: 44
-- misc-only changes: 44
+- total diff lines: 47
+- misc-only changes: 47
 - added Backchannel lines: 41
-- added Coconstruct lines: 3
+- added Coconstruct lines: 6
 - unexpected changes: 0
 - status: PASS
 

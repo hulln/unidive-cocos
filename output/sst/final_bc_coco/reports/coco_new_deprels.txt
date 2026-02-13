@@ -1,0 +1,75 @@
+[01] Gos051.s261 -> Gos051.s262
+- B:1 doživetje -> Coconstruct=obj::Gos051.s261::45
+- A:46 neko -> Coconstruct=det::Gos051.s262::1
+- A:47 prijetno -> Coconstruct=amod::Gos051.s262::1
+
+[02] Gos020.s407 -> Gos020.s408
+- B:1 slab -> Coconstruct=conj::Gos020.s407::19
+
+[03] Gos021.s149 -> Gos021.s150
+- B:1 rdeča -> Coconstruct=parataxis::Gos021.s149::4  (namesto ::15)
+- A:13 polovica -> Coconstruct=nsubj::Gos021.s150::1
+- A:15 je -> Coconstruct=cop::Gos021.s150::1
+- A:16 že -> Coconstruct=advmod::Gos021.s150::1
+- A:14 pa -> Coconstruct=advmod::Gos021.s150::1
+
+[04] Gos053.s461 -> Gos053.s462
+- B:1 kation -> Coconstruct=nsubj::Gos053.s461::6
+
+[05] Gos233.s415 -> Gos233.s417 ## ?
+- B:1 zaračuna -> Coconstruct=ccomp::Gos233.s415::2
+- A:10 kdor -> Coconstruct=nsubj::Gos233.s417::1
+- A:8 da -> Coconstruct=mark::Gos233.s417::1
+- A:14 poslal -> Coconstruct=advcl::Gos233.s417::1
+
+[06] Gos190.s165 -> Gos190.s167
+- B:2 let -> Coconstruct=obl::Gos190.s165::15
+- A:22 že -> Coconstruct=advmod::Gos190.s167::2
+
+[07] Gos233.s388 -> Gos233.s389 # "pa" označeno sicer kot discourse
+- B:1 more -> Coconstruct=parataxis::Gos233.s388::3
+- A:3 pa -> Coconstruct=advmod::Gos233.s389::1
+- A:1 ja -> Coconstruct=discourse::Gos233.s389::1
+
+[08] Gos233.s441 -> Gos233.s442
+- B:2 evrov -> Coconstruct=obl::Gos233.s441::3
+
+[09] Gos176.s792 -> Gos176.s793
+- B:3 skupno -> Coconstruct=parataxis::Gos176.s792::6
+
+[10] Gos017.s284 -> Gos017.s285
+- B:3 štiri -> Coconstruct=parataxis::Gos017.s284::12
+- A:12 bilo -> Coconstruct=cop::Gos017.s285::3
+- A:10 pol -> Coconstruct=advmod::Gos017.s285::3
+- A:13 pač -> Coconstruct=advmod::Gos017.s285::3
+
+[11] Gos200.s115 -> Gos200.s116 # vmes "aha", gledamo kot parataxis?
+- B:4 katerem -> Coconstruct=acl::Gos200.s115::23
+
+[12] Gos009.s225 -> Gos009.s227
+- B:5 cimra -> Coconstruct=obj::Gos009.s225::17
+- A:18 moj -> Coconstruct=reparandum::Gos009.s227::4
+- A:24 moj -> Coconstruct=reparandum::Gos009.s227::4
+
+[13] Gos246.s352 -> Gos246.s353
+- B:3 pozna -> Coconstruct=parataxis::Gos246.s352::4
+- A:4 vedno -> Coconstruct=advmod::Gos246.s353::3
+- A:2 da -> Coconstruct=mark::Gos246.s353::3
+- A:1 in -> Coconstruct=cc::Gos246.s353::3
+- A:3 še -> Coconstruct=advmod::Gos246.s353::3
+
+[14] Gos254.s615 -> Gos254.s616 # reparandumi
+- B:4 zgodi -> Coconstruct=parataxis::Gos254.s615::1
+- A:3 potem -> Coconstruct=reparandum::Gos254.s616::1
+- A:4 pa -> Coconstruct=reparandum::Gos254.s616::2
+
+[15] Gos233.s364 -> Gos233.s366
+- B:2 raztepe -> Coconstruct=advcl::Gos233.s364::7
+- A:9 ker -> Coconstruct=mark::Gos233.s366::2
+
+[16] Gos243.s99 -> Gos243.s100
+- B:4 fuknemo -> Coconstruct=parataxis::Gos243.s99::3
+- A:3 forumov -> Coconstruct=reparandum::Gos243.s100::3
+
+[17] Gos045.s301 -> Gos045.s302
+- B:3 gledati -> Coconstruct=xcomp::Gos045.s301::24
